@@ -21,6 +21,7 @@ public class PlayerJoinListener implements Listener {
     @EventHandler
     public void onLogin(LoginEvent ev) {
         ev.registerIntent(main);
+        
         try {
         	String sql = "SELECT * FROM " + main.getTablePrefix() + "bans " + "WHERE player = '" + ev.getConnection().getUniqueId() + "' ORDER BY -(expiration IS NULL), expiration DESC LIMIT 1";
             ResultSet rs = main.getHikari().getConnection().createStatement().executeQuery(sql);
@@ -44,8 +45,9 @@ public class PlayerJoinListener implements Listener {
             e.printStackTrace();
         }
         
+        
+        //String ip = ev.getConnection().getAddress().getAddress().toString();
         /*
-        String ip = ev.getConnection().getAddress().getAddress().toString();
         if (!ev.isCancelled() && main.getConfig().getInt("CTSuite.Security.MaxPlayersWithSameIP") > 0) {
             if (main.getPlayerHandler().getIps().containsKey(ip) && main.getPlayerHandler().getIps().get(ip) >= main
                     .getConfig().getInt("CTSuite.Security.MaxPlayersWithSameIP")) {
@@ -55,16 +57,17 @@ public class PlayerJoinListener implements Listener {
         }
         */
 
-        /*
+        
         if (!ev.isCancelled()) {
             main.getPlayerHandler().registerLogin(ev.getConnection());
 
+            /*
             if (main.getPlayerHandler().getIps().containsKey(ip))
                 main.getPlayerHandler().getIps().put(ip, main.getPlayerHandler().getIps().get(ip) + 1);
             else
                 main.getPlayerHandler().getIps().put(ip, 1);
+        	*/
         }
-        */
         
         ev.completeIntent(main);
     }

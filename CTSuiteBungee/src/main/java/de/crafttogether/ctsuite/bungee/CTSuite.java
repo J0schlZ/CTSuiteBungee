@@ -13,8 +13,10 @@ import com.google.common.io.ByteStreams;
 import com.zaxxer.hikari.HikariDataSource;
 
 import de.crafttogether.ctsuite.bungee.events.PlayerJoinListener;
+import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
 import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PermissionHandler;
+import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -27,7 +29,8 @@ public class CTSuite extends Plugin {
     private Configuration config;
     private String tablePrefix;
     private SimpleDateFormat dateFormat;
-    
+
+    private PlayerHandler playerHandler;
     private PermissionHandler permissionHandler;
     private MessageHandler messageHandler;
 
@@ -78,7 +81,8 @@ public class CTSuite extends Plugin {
         
         tablePrefix = this.config.getString("MySQL.prefix");
         dateFormat = new SimpleDateFormat(config.getString("CTSuite.Messages.TimeFormat"));
-        
+
+        playerHandler = new PlayerHandler(this);
         permissionHandler = new PermissionHandler(this);
         messageHandler = new MessageHandler(this);
 
@@ -87,11 +91,17 @@ public class CTSuite extends Plugin {
         
         getProxy().registerChannel("CTSuite");
         getProxy().getPluginManager().registerListener(this, new PlayerJoinListener(this));
+        getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener(this));
     }
 
     public void onDisable() {
         if (this.hikari != null) {
-            this.hikari.close();
+        	try {
+        		this.hikari.close();
+        	}
+        	catch (Exception ex) {
+        		System.out.println(ex);
+        	}
         }
     }
 
@@ -103,12 +113,16 @@ public class CTSuite extends Plugin {
     	return tablePrefix;
     }
 
-    public MessageHandler getMessageHandler() {
-        return messageHandler;
+    public PlayerHandler getPlayerHandler() {
+        return playerHandler;
     }
 
     public PermissionHandler getPermissionHandler() {
         return permissionHandler;
+    }
+    
+    public MessageHandler getMessageHandler() {
+        return messageHandler;
     }
     
     public HikariDataSource getHikari() {
