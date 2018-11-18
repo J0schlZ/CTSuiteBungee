@@ -1,0 +1,11 @@
+MySQL:
+  host: 127.0.0.1
+  port: 3306
+  database: minecraft
+  prefix: ct_
+  user: root
+  password:
+CTSuite:
+  Messages:
+    TimeFormat: dd.MM.yyyy HH:mm:ss
+    JoinMessageDelayMS: 150 

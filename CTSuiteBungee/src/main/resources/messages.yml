@@ -1,0 +1,4 @@
+join.banned: 'You have been banned:\n%reason%'
+join.banneduntil: 'You have been banned until %expiration%:\n%reason%'
+join.broadcast: '%prefix%%player%%suffix% joined the network.'
+join.newplayer.announcement: 'Welcome to the network, %player%'

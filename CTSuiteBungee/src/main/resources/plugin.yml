@@ -1,0 +1,4 @@
+name: CTSuite
+main: de.crafttogether.ctsuite.bungee.CTSuite
+version: 0.0.1
+author: J0schlZ
