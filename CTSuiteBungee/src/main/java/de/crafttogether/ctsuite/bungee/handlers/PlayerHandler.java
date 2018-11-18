@@ -13,16 +13,16 @@ import java.util.UUID;
 public class PlayerHandler {
     private CTSuite main;
     
-    public HashMap<UUID, CTPlayer> players;
+    public HashMap<String, CTPlayer> players;
 
     public PlayerHandler(CTSuite main) {
         this.main = main;
-        players = new HashMap<UUID, CTPlayer>();
+        players = new HashMap<String, CTPlayer>();
     }
 
-    public void registerLogin(final PendingConnection con) {
+    public void registerLogin(PendingConnection con) {
         try {
-        	UUID uuid = con.getUniqueId();
+        	String uuid = con.getUniqueId().toString();
         	String name = con.getName();
         	ProxiedPlayer p = main.getProxy().getPlayer(uuid);
         	
@@ -78,7 +78,7 @@ public class PlayerHandler {
 
     }
 
-    public void registerLogout(final ProxiedPlayer p) {
+    public void registerLogout(ProxiedPlayer p) {
         main.getProxy().getScheduler().runAsync(main, new Runnable() {
             public void run() {
             	String uuid = p.getUniqueId().toString();
@@ -96,6 +96,12 @@ public class PlayerHandler {
                 }
             }
         });
+    }
+    
+    public void updatePrefixSuffix(String uuid, String prefix, String suffix) {
+    	players.get(uuid).prefix = prefix;
+    	players.get(uuid).suffix = suffix;
+    	main.getMessageHandler().broadcast("Prefix Suffix WALLAH");;
     }
 
 
