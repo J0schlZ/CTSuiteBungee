@@ -17,6 +17,7 @@ import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
 import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PermissionHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
+import de.crafttogether.ctsuite.bungee.util.PluginMessageListener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -88,10 +89,13 @@ public class CTSuite extends Plugin {
 
         messageHandler.readMessagesFromFile();
         permissionHandler.readAvailablePermissionsFromFile();
-        
-        getProxy().registerChannel("CTSuite");
+
         getProxy().getPluginManager().registerListener(this, new PlayerJoinListener(this));
         getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener(this));
+
+        getProxy().registerChannel("ctsuite:bukkit");
+        getProxy().registerChannel("ctsuite:bungee");
+        getProxy().getPluginManager().registerListener(this, new PluginMessageListener(this));
     }
 
     public void onDisable() {

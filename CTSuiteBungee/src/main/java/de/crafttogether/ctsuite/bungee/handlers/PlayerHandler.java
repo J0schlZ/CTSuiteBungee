@@ -85,7 +85,6 @@ public class PlayerHandler {
                 String sql = 
                   "UPDATE " + main.getTablePrefix() + "players SET " +
                     "name = '" + p.getName() + "', " +
-                    "server = '" + p.getServer().getInfo().getName() + "', " +
                     "online = 0, " + 
                     "last_seen = now() " +
                   "WHERE uuid = '" + uuid + "'";
@@ -98,10 +97,14 @@ public class PlayerHandler {
         });
     }
     
-    public void updatePrefixSuffix(String uuid, String prefix, String suffix) {
+    public void setPrefix(String uuid, String prefix) {
     	players.get(uuid).prefix = prefix;
+    	main.getMessageHandler().broadcast("Prefix: " + prefix);
+    }
+    
+    public void setSuffix(String uuid, String suffix) {
     	players.get(uuid).suffix = suffix;
-    	main.getMessageHandler().broadcast("Prefix Suffix WALLAH");;
+    	main.getMessageHandler().broadcast("Suffix: " + suffix);
     }
 
 
