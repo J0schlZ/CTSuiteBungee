@@ -32,8 +32,11 @@ public class PermissionHandler {
     }
 
     public void updatePermissions(ProxiedPlayer p) {
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        //PluginMessage pm = new PluginMessage(this)
+    	ByteArrayOutputStream b = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(b);
+        
+        
         try {
             out.writeUTF("GetPermissions");
             out.writeUTF(p.getName());
@@ -79,13 +82,13 @@ public class PermissionHandler {
         return hasPermission(sender, permission, false);
     }
 
-    public boolean hasPermission(CommandSender sender, String permission, boolean ignoreSternchen) {
+    public boolean hasPermission(CommandSender sender, String permission, boolean ignoreWildcard) {
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer p = (ProxiedPlayer) sender;
             if (permissions.containsKey(p.getName())) {
-                if (permissions.get(p.getName()).contains(permission.toLowerCase()) || (!ignoreSternchen && permissions.get(p.getName()).contains("*")) || (!ignoreSternchen && permissions.get(p.getName()).contains(permission.toLowerCase() + ".*")))
+                if (permissions.get(p.getName()).contains(permission.toLowerCase()) || (!ignoreWildcard && permissions.get(p.getName()).contains("*")) || (!ignoreWildcard && permissions.get(p.getName()).contains(permission.toLowerCase() + ".*")))
                     return true;
-                else if (!ignoreSternchen) {
+                else if (!ignoreWildcard) {
                     String check = "";
                     for (String s : permission.toLowerCase().split("\\.")) {
                         check = check + s + ".";

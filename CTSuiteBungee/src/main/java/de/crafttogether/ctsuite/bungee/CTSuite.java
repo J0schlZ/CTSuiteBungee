@@ -17,7 +17,7 @@ import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
 import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PermissionHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
-import de.crafttogether.ctsuite.bungee.util.PluginMessageListener;
+import de.crafttogether.ctsuite.bungee.util.PMessageListener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -30,11 +30,10 @@ public class CTSuite extends Plugin {
     private Configuration config;
     private String tablePrefix;
     private SimpleDateFormat dateFormat;
-
     private PlayerHandler playerHandler;
     private PermissionHandler permissionHandler;
     private MessageHandler messageHandler;
-
+    
     public void onEnable() {
         instance = this;
         
@@ -95,7 +94,7 @@ public class CTSuite extends Plugin {
 
         getProxy().registerChannel("ctsuite:bukkit");
         getProxy().registerChannel("ctsuite:bungee");
-        getProxy().getPluginManager().registerListener(this, new PluginMessageListener(this));
+        getProxy().getPluginManager().registerListener(this, new PMessageListener(this));
     }
 
     public void onDisable() {
@@ -108,7 +107,7 @@ public class CTSuite extends Plugin {
         	}
         }
     }
-
+    
     public Configuration getConfig() {
         return config;
     }
