@@ -2,10 +2,14 @@ package de.crafttogether.ctsuite.bungee.handlers;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
+import de.crafttogether.ctsuite.bungee.util.PMessage;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
@@ -13,10 +17,12 @@ public class PlayerHandler {
     private CTSuite main;
     
     public HashMap<String, CTPlayer> players;
+    public HashMap<String, ProxiedPlayer> proxiedPlayers;
 
     public PlayerHandler(CTSuite main) {
         this.main = main;
         players = new HashMap<String, CTPlayer>();
+        proxiedPlayers = new HashMap<String, ProxiedPlayer>();
     }
 
     public void registerLogin(PendingConnection con) {
@@ -74,11 +80,21 @@ public class PlayerHandler {
         }
 
     }
+    
+    public void addPlayer(ProxiedPlayer p) {
+    	proxiedPlayers.put(p.getUniqueId().toString(), p);
+    }
+    
+    public void updatePlayer(ProxiedPlayer p) {
+    	String uuid = p.getUniqueId().toString();
+    	players.get(uuid).server = p.getServer().getInfo().getName();
+    }
 
     public void registerLogout(ProxiedPlayer p) {
+    	final String uuid = p.getUniqueId().toString();
+    	
         main.getProxy().getScheduler().runAsync(main, new Runnable() {
             public void run() {
-            	String uuid = p.getUniqueId().toString();
                 String sql = 
                   "UPDATE " + main.getTablePrefix() + "players SET " +
                     "name = '" + p.getName() + "', " +
@@ -92,6 +108,16 @@ public class PlayerHandler {
                 }
             }
         });
+        
+        if (proxiedPlayers.containsKey(uuid))
+        	proxiedPlayers.remove(uuid);
+    }
+    
+    public ProxiedPlayer getProxiedPlayer(String uuid) {
+    	if (proxiedPlayers.containsKey(uuid))
+    		return proxiedPlayers.get(uuid);
+    	else
+    		return null;
     }
     
     public void setPrefix(String uuid, String prefix) {
@@ -101,4 +127,35 @@ public class PlayerHandler {
     public void setSuffix(String uuid, String suffix) {
     	players.get(uuid).suffix = suffix;
     }
+    
+    public void setIsAllowedFlight(String uuid, boolean isAllowedFlight) {
+    	if (players.containsKey(uuid)) {
+	    	PMessage pm = new PMessage(main, "bukkit.player.set.isAllowedFlight");
+	    	pm.put(uuid); // Using name instead of UUID because players on servers in offline-mode doesn't have same UUID as provied by Mojang
+	    	pm.put(isAllowedFlight ? "true" : "false");
+	    	pm.send(players.get(uuid).server);
+    	}
+    }
+    
+	@SuppressWarnings("deprecation")
+	public void updateIsAllowedFlight(String uuid, String senderUUID, boolean isAllowedFlight, boolean apply) {
+		if (apply) setIsAllowedFlight(uuid, isAllowedFlight);
+		
+		if (uuid.equals(senderUUID)) {
+			ProxiedPlayer p = getProxiedPlayer(uuid);
+			
+			if (p.isConnected()) {
+				if (isAllowedFlight)
+					p.sendMessage("Du kannst jetzt fliegen");
+				else
+					p.sendMessage("Komm mal wieder auf den Boden");
+			}
+			else
+				System.out.println("p is nich connected");
+		}
+		
+		else {
+			
+		}
+	}
 }

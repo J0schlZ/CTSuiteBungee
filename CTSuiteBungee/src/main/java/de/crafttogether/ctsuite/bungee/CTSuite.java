@@ -12,10 +12,10 @@ import java.text.SimpleDateFormat;
 import com.google.common.io.ByteStreams;
 import com.zaxxer.hikari.HikariDataSource;
 
-import de.crafttogether.ctsuite.bungee.events.PlayerJoinListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
-import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
-import de.crafttogether.ctsuite.bungee.handlers.PermissionHandler;
+import de.crafttogether.ctsuite.bungee.events.PlayerLoginListener;
+import de.crafttogether.ctsuite.bungee.events.PlayerPostLoginListener;
+import de.crafttogether.ctsuite.bungee.events.PlayerSwitchedServerListener;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
 import de.crafttogether.ctsuite.bungee.util.PMessageListener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -31,8 +31,6 @@ public class CTSuite extends Plugin {
     private String tablePrefix;
     private SimpleDateFormat dateFormat;
     private PlayerHandler playerHandler;
-    private PermissionHandler permissionHandler;
-    private MessageHandler messageHandler;
     
     public void onEnable() {
         instance = this;
@@ -40,9 +38,10 @@ public class CTSuite extends Plugin {
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
         }
+        
         File configFile = new File(getDataFolder(), "config.yml");
         File messagesFile = new File(getDataFolder(), "messages.yml");
-        File announcementsFile = new File(getDataFolder(), "announcements.yml");
+        
         try {
             if (!configFile.exists()) {
                 configFile.createNewFile();
@@ -54,12 +53,6 @@ public class CTSuite extends Plugin {
                 messagesFile.createNewFile();
                 InputStream is = getResourceAsStream("messages.yml");
                 OutputStream os = new FileOutputStream(messagesFile);
-                ByteStreams.copy(is, os);
-            }
-            if (!announcementsFile.exists()) {
-                announcementsFile.createNewFile();
-                InputStream is = getResourceAsStream("announcements.yml");
-                OutputStream os = new FileOutputStream(announcementsFile);
                 ByteStreams.copy(is, os);
             }
         } catch (IOException e) {
@@ -83,13 +76,10 @@ public class CTSuite extends Plugin {
         dateFormat = new SimpleDateFormat(config.getString("CTSuite.Messages.TimeFormat"));
 
         playerHandler = new PlayerHandler(this);
-        permissionHandler = new PermissionHandler(this);
-        messageHandler = new MessageHandler(this);
 
-        messageHandler.readMessagesFromFile();
-        permissionHandler.readAvailablePermissionsFromFile();
-
-        getProxy().getPluginManager().registerListener(this, new PlayerJoinListener(this));
+        getProxy().getPluginManager().registerListener(this, new PlayerLoginListener(this));
+        getProxy().getPluginManager().registerListener(this, new PlayerPostLoginListener(this));
+        getProxy().getPluginManager().registerListener(this, new PlayerSwitchedServerListener(this));
         getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener(this));
 
         getProxy().registerChannel("ctsuite:bukkit");
@@ -118,14 +108,6 @@ public class CTSuite extends Plugin {
 
     public PlayerHandler getPlayerHandler() {
         return playerHandler;
-    }
-
-    public PermissionHandler getPermissionHandler() {
-        return permissionHandler;
-    }
-    
-    public MessageHandler getMessageHandler() {
-        return messageHandler;
     }
     
     public HikariDataSource getHikari() {

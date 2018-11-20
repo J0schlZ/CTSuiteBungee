@@ -11,10 +11,10 @@ import java.util.Date;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 
-public class PlayerJoinListener implements Listener {
+public class PlayerLoginListener implements Listener {
     private CTSuite main;
 
-    public PlayerJoinListener(CTSuite main) {
+    public PlayerLoginListener(CTSuite main) {
         this.main = main;
     }
 
@@ -31,12 +31,12 @@ public class PlayerJoinListener implements Listener {
                 
                 if (rs.wasNull() || expiration.after(new Date())) {
                     ev.setCancelled(true);
-                    String reason;
+                    String reason = "banned";
                     
-                    if (rs.wasNull())
-                        reason = main.getMessageHandler().getMessage("join.banned").replace("%reason%", rs.getString("reason"));
-                    else
-                        reason = main.getMessageHandler().getMessage("join.banneduntil").replace("%reason%", rs.getString("reason")).replace("%expiration%", main.getDateFormat().format(expiration));
+                    // if (rs.wasNull())
+                    //     reason = main.getMessageHandler().getMessage("join.banned").replace("%reason%", rs.getString("reason"));
+                    // else
+                    //     reason = main.getMessageHandler().getMessage("join.banneduntil").replace("%reason%", rs.getString("reason")).replace("%expiration%", main.getDateFormat().format(expiration));
                     
                     ev.setCancelReason(new TextComponent(reason));
                 }

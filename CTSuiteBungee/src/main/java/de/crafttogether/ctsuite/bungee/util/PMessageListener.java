@@ -55,19 +55,26 @@ public class PMessageListener implements Listener {
             
             switch(messageName) {
             	
-            	case "bungee.player.updatePrefixSuffix":
-            		// 0 = uuid, 1 = prefix, 2 = suffix
+            	case "bungee.player.update.prefixSuffix":
+            		/*
+            		 *  0 => (str)	uuid
+            		 *	1 => (str)	prefix
+            		 *  2 => (str)	suffix
+            		 */
             		main.getPlayerHandler().setPrefix(values.get(0), values.get(1));
             		main.getPlayerHandler().setSuffix(values.get(0), values.get(2));
-            		PMessage pm = new PMessage(main, "bukkit.player.setGamemode");
-            		pm.put(values.get(0));
-            		pm.send(serverName);
             		break;
             	
-            		
-            	case "bungee.player.setGamemode":
-            		
+            	case "bungee.player.update.isAllowedFlight":
+            		/*
+            		 * 0 => (str)	uuid
+            		 * 1 => (str)	senderUUID
+            		 * 2 => (bool)	isAllowedFlight
+            		 * 3 => (bool)	apply
+            		 */
+            		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), ((values.get(2).equals("true")) ? true : false), (values.get(3).equals("true") ? true : false));
             		break;
+            	
             }
     	}
     }
