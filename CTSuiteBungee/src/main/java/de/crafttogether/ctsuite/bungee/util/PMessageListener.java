@@ -7,6 +7,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -52,7 +57,7 @@ public class PMessageListener implements Listener {
 			}
 
             System.out.println("[PMessage][" + serverName + "->Bungee]: " + messageName);
-            
+            TextComponent text;
             switch(messageName) {
             	
             	case "bungee.player.update.prefixSuffix":
@@ -80,6 +85,11 @@ public class PMessageListener implements Listener {
             		 * 0 => (str)	uuid
             		 * 1 => (str)	permission
             		 */
+            		// Temp
+            		text = new TextComponent();
+            		TextComponent.fromLegacyText("&cDazu hast du keine Berechtigung");
+            		text.setHoverEvent( new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(values.get(1)).create()));
+            		main.getPlayerHandler().sendMessage(values.get(0), text);
             		break;
             		
             	case "bungee.player.inform.sendMessage":
@@ -87,6 +97,10 @@ public class PMessageListener implements Listener {
             		 * 0 => (str)	uuid
             		 * 1 => (str)	messageKey
             		 */
+            		// Temp
+            		text = new TextComponent();
+            		TextComponent.fromLegacyText("&f" + values.get(1));
+            		main.getPlayerHandler().sendMessage(values.get(0), text);
             		break;
             }
     	}

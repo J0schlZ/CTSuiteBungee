@@ -9,7 +9,11 @@ import java.util.Iterator;
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
 import de.crafttogether.ctsuite.bungee.util.PMessage;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
@@ -137,25 +141,48 @@ public class PlayerHandler {
     	}
     }
     
-	@SuppressWarnings("deprecation")
 	public void updateIsAllowedFlight(String uuid, String senderUUID, boolean isAllowedFlight, boolean apply) {
-		if (apply) setIsAllowedFlight(uuid, isAllowedFlight);
+		if (apply)
+			setIsAllowedFlight(uuid, isAllowedFlight);
 		
-		if (uuid.equals(senderUUID)) {
-			ProxiedPlayer p = getProxiedPlayer(uuid);
+		ProxiedPlayer p = getProxiedPlayer(uuid);
+		
+		if (p.isConnected()) {
+			new TextComponent();
 			
-			if (p.isConnected()) {
-				if (isAllowedFlight)
-					p.sendMessage("Du kannst jetzt fliegen");
-				else
-					p.sendMessage("Komm mal wieder auf den Boden");
-			}
+			if (isAllowedFlight)
+				p.sendMessage(TextComponent.fromLegacyText("&6Du kannst jetzt fliegen"));
 			else
-				System.out.println("p is nich connected");
+				p.sendMessage(TextComponent.fromLegacyText("&6Komm mal wieder auf den Boden"));
+			
+			players.get(uuid).isAllowedFlight = isAllowedFlight;
 		}
 		
-		else {
-			
+        main.getProxy().getScheduler().runAsync(main, new Runnable() {
+            public void run() {
+                String sql = 
+                  "UPDATE " + main.getTablePrefix() + "players SET " +
+                    "allowed_flight = " + (isAllowedFlight ? 1 : 0)  + ", " +
+                    "last_seen = now() " +
+                  "WHERE uuid = '" + uuid + "'";
+                try {
+                    main.getHikari().getConnection().createStatement().execute(sql);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+	}
+	
+	public void sendMessage(String uuid, TextComponent text) {
+		ProxiedPlayer p = getProxiedPlayer(uuid);
+		
+		if (p != null) {
+			p.sendMessage(text);
 		}
+	}
+	
+	public void broadcast (TextComponent text) {
+		main.getProxy().broadcast(text);
 	}
 }

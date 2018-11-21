@@ -11,4 +11,5 @@ public class CTPlayer
 	public InetSocketAddress address = null;
 	public String suffix = null;
 	public String prefix = null;
+	public Boolean isAllowedFlight = null;
 }
