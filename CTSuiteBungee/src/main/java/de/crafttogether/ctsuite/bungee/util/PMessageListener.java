@@ -75,6 +75,19 @@ public class PMessageListener implements Listener {
             		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), ((values.get(2).equals("true")) ? true : false), (values.get(3).equals("true") ? true : false));
             		break;
             	
+            	case "bungee.player.inform.permissionDenied":
+            		/*
+            		 * 0 => (str)	uuid
+            		 * 1 => (str)	permission
+            		 */
+            		break;
+            		
+            	case "bungee.player.inform.sendMessage":
+            		/*
+            		 * 0 => (str)	uuid
+            		 * 1 => (str)	messageKey
+            		 */
+            		break;
             }
     	}
     }
