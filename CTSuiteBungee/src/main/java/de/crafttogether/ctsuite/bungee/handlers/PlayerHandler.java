@@ -16,10 +16,6 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 public class PlayerHandler {
     private CTSuite main;
     
-    private ResultSet resultSet = null;
-    private PreparedStatement statement = null;
-    private Connection connection = null;
-    
     public HashMap<String, String> names; // uuid, name
     public HashMap<String, CTPlayer> players;
     public HashMap<String, ProxiedPlayer> proxiedPlayers;
@@ -32,28 +28,25 @@ public class PlayerHandler {
     }
    
     public void registerLogin(PendingConnection con) {
+    	ResultSet resultSet = null;
+        PreparedStatement statement = null;
+        Connection connection = null;
+        
     	String uuid = con.getUniqueId().toString();
     	String name = con.getName();
         
         try {
 			connection = main.getConnection();
-			statement = connection.prepareStatement("SELECT id, name FROM " + main.getTablePrefix() + "players WHERE uuid = ?;");
+			statement = connection.prepareStatement("SELECT * FROM " + main.getTablePrefix() + "players WHERE uuid = ?;");
 			statement.setString(1, uuid);
 			resultSet = statement.executeQuery();
         	
             if (!resultSet.next())
             	firstLogin(uuid, name);
             else {
-                statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET name = ?, online = 1, last_seen = now() WHERE uuid = ?;");
-                statement.setString(1, name);
-                statement.setString(2, uuid);
-    			statement.execute();
-    			
                 CTPlayer ctPlayer = new CTPlayer(uuid);
-                ctPlayer = getUpdatedPlayer(ctPlayer, resultSet);
-                if (ctPlayer == null) {
-                	main.getLogger().warning("OH OH!");
-                }
+                ctPlayer.updateData(resultSet);
+                
                 if (!name.equalsIgnoreCase(ctPlayer.name)) {
                 	// Name Changed
                 }
@@ -64,6 +57,32 @@ public class PlayerHandler {
                 
                 players.put(uuid, ctPlayer);
                 names.put(uuid, name);
+                
+            	main.getProxy().getScheduler().runAsync(main, new Runnable() {
+                    public void run() {
+                        PreparedStatement statement = null;
+                        Connection connection = null;
+                        
+		                try {
+		                	connection = main.getConnection();
+							statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET name = ?, online = 1, last_seen = now() WHERE uuid = ?;");
+							statement.setString(1, name);
+							statement.setString(2, uuid);
+							statement.execute();
+		    			} catch (SQLException e) {
+							e.printStackTrace();
+						} finally {
+				            if (statement != null) {
+				                try { statement.close(); }
+				                catch (SQLException e) { e.printStackTrace(); }
+				            }
+				            if (connection != null) {
+				                try { connection.close(); }
+				                catch (SQLException e) { e.printStackTrace(); }
+				            }
+				        }
+                    }
+            	});
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -86,6 +105,9 @@ public class PlayerHandler {
     public void firstLogin (String uuid, String name) {   	
     	main.getProxy().getScheduler().runAsync(main, new Runnable() {
             public void run() {
+                PreparedStatement statement = null;
+                Connection connection = null;
+                
             	long currentTimestamp = System.currentTimeMillis() / 1000;
 				
 				try {
@@ -126,31 +148,14 @@ public class PlayerHandler {
             }
         });
     }
-    
-    public CTPlayer getUpdatedPlayer(CTPlayer ctPlayer, ResultSet rs) {
-    	try {
-    		if (!rs.next()) return null;
-	    	ctPlayer.name = rs.getString("name");
-	    	ctPlayer.nickname = rs.getString("nickname");
-	    	ctPlayer.server = rs.getString("server");
-	    	ctPlayer.world = rs.getString("world");
-	    	ctPlayer.isOnline = (rs.getInt("online") == 1) ? true : false;
-	    	ctPlayer.gamemode = rs.getInt("gamemode");
-	    	ctPlayer.isFlying = (rs.getInt("flying") == 1) ? true : false;
-	    	ctPlayer.isAllowedFlight = (rs.getInt("allowed_flight") == 1) ? true : false;
-	    	ctPlayer.isVanished = (rs.getInt("vanished") == 1) ? true : false;
-	    	ctPlayer.firstJoin = rs.getLong("first_join");
-	    	ctPlayer.lastSeen = rs.getLong("last_seen");
-    	} catch (SQLException e) {
-    		e.printStackTrace();
-    	}
-    	return ctPlayer;
-    }
-
 
     public void readPlayersFromDB() {
     	 main.getProxy().getScheduler().runAsync(main, new Runnable() {
-             public void run() {            	 
+             public void run() {
+            	 ResultSet resultSet = null;
+            	 PreparedStatement statement = null;
+            	 Connection connection = null;
+            	 
                  try {
                 	connection = main.getConnection();
                 	statement = connection.prepareStatement("SELECT * FROM " + main.getTablePrefix() + "players");
@@ -161,7 +166,7 @@ public class PlayerHandler {
                     	String name = resultSet.getString("name");
                     	
                     	CTPlayer ctPlayer = new CTPlayer(uuid);
-                    	ctPlayer = getUpdatedPlayer(ctPlayer, resultSet);
+                    	ctPlayer.updateData(resultSet);
                     	players.put(uuid, ctPlayer);
                         names.put(uuid, name);
                     }
@@ -198,7 +203,10 @@ public class PlayerHandler {
     	final String uuid = p.getUniqueId().toString();
     	
         main.getProxy().getScheduler().runAsync(main, new Runnable() {
-            public void run() {                
+            public void run() {
+                PreparedStatement statement = null;
+                Connection connection = null;
+                
                 try {
                 	connection = main.getConnection();
                     statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET name = ?, online = 0, last_seen = now() WHERE uuid = ?;");
@@ -251,7 +259,6 @@ public class PlayerHandler {
     
     public CTPlayer getPlayerByName(String name) {
     	String uuid = getUUID(name);
-		System.out.println("UUID -> " + uuid);
     	if (uuid != null && players.containsKey(uuid)) {
 			return players.get(uuid);
 		}
@@ -297,7 +304,6 @@ public class PlayerHandler {
 			if (apply)
     			setIsAllowedFlight(ctPlayer.uuid, isAllowedFlight);
 
-			System.out.println("Setze Mode auf: " + isAllowedFlight + " Vorher: " + players.get(ctPlayer.uuid).isAllowedFlight);
 			if (players.get(ctPlayer.uuid).isAllowedFlight != isAllowedFlight) {				
 				if (player != null && player.isConnected()) {
 					new TextComponent();
@@ -323,7 +329,10 @@ public class PlayerHandler {
 			players.get(ctPlayer.uuid).isAllowedFlight = isAllowedFlight;
 			
 			main.getProxy().getScheduler().runAsync(main, new Runnable() {
-	            public void run() {                	
+	            public void run() {
+	                PreparedStatement statement = null;
+	                Connection connection = null;
+	                
 	                try {
 	                	connection = main.getConnection();
 	                    statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET allowed_flight = ? WHERE uuid = ?;");

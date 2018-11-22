@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -72,7 +73,7 @@ public class PMessageListener implements Listener {
             		/*
             		 * 0 => (str)	playerName
             		 * 1 => (str)	senderUUID
-            		 * 2 => (bool)	isAllowedFlight
+            		 * 2 => (str)	on|off|toggle
             		 * 3 => (bool)	apply
             		 */
             		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
@@ -84,8 +85,8 @@ public class PMessageListener implements Listener {
             		 * 1 => (str)	permission
             		 */
             		// Temp
-            		text = new TextComponent();
-            		TextComponent.fromLegacyText("&cDazu hast du keine Berechtigung");
+            		text = new TextComponent("Dazu hast du keine Berechtigung");
+            		text.setColor(ChatColor.RED);
             		text.setHoverEvent( new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(values.get(1)).create()));
             		main.getPlayerHandler().sendMessage(values.get(0), text);
             		break;
@@ -96,8 +97,8 @@ public class PMessageListener implements Listener {
             		 * 1 => (str)	messageKey
             		 */
             		// Temp
-            		text = new TextComponent();
-            		TextComponent.fromLegacyText("&f" + values.get(1));
+            		text = new TextComponent(values.get(1));
+            		text.setColor(ChatColor.WHITE);
             		main.getPlayerHandler().sendMessage(values.get(0), text);
             		break;
             }

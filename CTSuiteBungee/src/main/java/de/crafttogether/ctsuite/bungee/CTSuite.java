@@ -78,7 +78,7 @@ public class CTSuite extends Plugin {
         dateFormat = new SimpleDateFormat(config.getString("CTSuite.Messages.TimeFormat"));
 
         playerHandler = new PlayerHandler(this);
-
+        
         getProxy().getPluginManager().registerListener(this, new PlayerLoginListener(this));
         getProxy().getPluginManager().registerListener(this, new PlayerPostLoginListener(this));
         getProxy().getPluginManager().registerListener(this, new PlayerSwitchedServerListener(this));
@@ -87,6 +87,8 @@ public class CTSuite extends Plugin {
         getProxy().registerChannel("ctsuite:bukkit");
         getProxy().registerChannel("ctsuite:bungee");
         getProxy().getPluginManager().registerListener(this, new PMessageListener(this));
+
+        playerHandler.readPlayersFromDB();
     }
 
     public void onDisable() {
