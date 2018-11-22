@@ -1,18 +1,14 @@
 package de.crafttogether.ctsuite.bungee.handlers;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
 import de.crafttogether.ctsuite.bungee.util.PMessage;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -20,72 +16,176 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 public class PlayerHandler {
     private CTSuite main;
     
+    private ResultSet resultSet = null;
+    private PreparedStatement statement = null;
+    private Connection connection = null;
+    
+    public HashMap<String, String> names; // uuid, name
     public HashMap<String, CTPlayer> players;
     public HashMap<String, ProxiedPlayer> proxiedPlayers;
 
     public PlayerHandler(CTSuite main) {
         this.main = main;
         players = new HashMap<String, CTPlayer>();
+        names = new HashMap<String, String>();
         proxiedPlayers = new HashMap<String, ProxiedPlayer>();
     }
-
+   
     public void registerLogin(PendingConnection con) {
+    	String uuid = con.getUniqueId().toString();
+    	String name = con.getName();
+        
         try {
-        	String uuid = con.getUniqueId().toString();
-        	String name = con.getName();
+			connection = main.getConnection();
+			statement = connection.prepareStatement("SELECT id, name FROM " + main.getTablePrefix() + "players WHERE uuid = ?;");
+			statement.setString(1, uuid);
+			resultSet = statement.executeQuery();
         	
-        	CTPlayer ctPlayer = new CTPlayer();
-            players.put(uuid, ctPlayer);
-            players.get(uuid).uuid = uuid;
-            players.get(uuid).name = name;
-            
-            String sql;
-            ResultSet rs = null;
-            
-            try {
-            	sql = 
-            	  "SELECT id, name FROM " + main.getTablePrefix() + "players " +
-            	  "WHERE uuid = '" + con.getUniqueId() + "'";
-            	rs = main.getHikari().getConnection().createStatement().executeQuery(sql);
-        	} catch (SQLException e) {
-                e.printStackTrace();
-            }
-
-            if (rs.next()) {                               
-                try {
-                    sql = 
-                      "UPDATE " + main.getTablePrefix() + "players SET " + 
-                        "name = '" + name + "', " + 
-                        "online = '1', " +
-                        "last_seen = now() " +
-                      "WHERE uuid = '" + uuid + "'";
-                    
-                    main.getHikari().getConnection().createStatement().execute(sql);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+            if (!resultSet.next())
+            	firstLogin(uuid, name);
+            else {
+                statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET name = ?, online = 1, last_seen = now() WHERE uuid = ?;");
+                statement.setString(1, name);
+                statement.setString(2, uuid);
+    			statement.execute();
+    			
+                CTPlayer ctPlayer = new CTPlayer(uuid);
+                ctPlayer = getUpdatedPlayer(ctPlayer, resultSet);
+                if (ctPlayer == null) {
+                	main.getLogger().warning("OH OH!");
                 }
-            } else {
-                sql =
-                  "INSERT INTO " + main.getTablePrefix() + "players (uuid, name, online, last_seen) " + 
-                  "VALUES (" +
-                     "'" + uuid + "', " +
-                     "'" + name + "', " + 
-                     "'1', " + 
-                     "now()" +
-                   ")";
-                try {
-                    main.getHikari().getConnection().createStatement().execute(sql);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                if (!name.equalsIgnoreCase(ctPlayer.name)) {
+                	// Name Changed
                 }
+                
+                ctPlayer.name = name;
+                ctPlayer.isOnline = true;
+                ctPlayer.lastSeen = System.currentTimeMillis() / 1000;
+                
+                players.put(uuid, ctPlayer);
+                names.put(uuid, name);
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (resultSet != null) {
+                try { resultSet.close(); }
+                catch (SQLException e) { e.printStackTrace(); }
+            }
+            if (statement != null) {
+                try { statement.close(); }
+                catch (SQLException e) { e.printStackTrace(); }
+            }
+            if (connection != null) {
+                try { connection.close(); }
+                catch (SQLException e) { e.printStackTrace(); }
+            }
         }
-
     }
     
-    public void addPlayer(ProxiedPlayer p) {
+    public void firstLogin (String uuid, String name) {   	
+    	main.getProxy().getScheduler().runAsync(main, new Runnable() {
+            public void run() {
+            	long currentTimestamp = System.currentTimeMillis() / 1000;
+				
+				try {
+					connection = main.getConnection();
+					statement = connection.prepareStatement(
+					  "INSERT INTO " + main.getTablePrefix() + "players " + 
+					  "(uuid, name, online, first_join, last_seen) " +
+					  "VALUES (?,?,?,?,?);"
+					);
+					
+	                statement.setString(1, uuid);
+	                statement.setString(2, name);
+	                statement.setInt(3, 1);
+	                statement.setLong(4, currentTimestamp);
+	                statement.setLong(5, currentTimestamp);
+	    			statement.execute();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} finally {
+		            if (statement != null) {
+		                try { statement.close(); }
+		                catch (SQLException e) { e.printStackTrace(); }
+		            }
+		            if (connection != null) {
+		                try { connection.close(); }
+		                catch (SQLException e) { e.printStackTrace(); }
+		            }
+		        }
+				
+				CTPlayer ctPlayer =  new CTPlayer(uuid);
+				ctPlayer.name = name;
+                ctPlayer.isOnline = true;
+                ctPlayer.firstJoin = currentTimestamp;
+                ctPlayer.lastSeen = currentTimestamp;
+                
+                players.put(uuid, ctPlayer);
+                names.put(uuid, name);
+            }
+        });
+    }
+    
+    public CTPlayer getUpdatedPlayer(CTPlayer ctPlayer, ResultSet rs) {
+    	try {
+    		if (!rs.next()) return null;
+	    	ctPlayer.name = rs.getString("name");
+	    	ctPlayer.nickname = rs.getString("nickname");
+	    	ctPlayer.server = rs.getString("server");
+	    	ctPlayer.world = rs.getString("world");
+	    	ctPlayer.isOnline = (rs.getInt("online") == 1) ? true : false;
+	    	ctPlayer.gamemode = rs.getInt("gamemode");
+	    	ctPlayer.isFlying = (rs.getInt("flying") == 1) ? true : false;
+	    	ctPlayer.isAllowedFlight = (rs.getInt("allowed_flight") == 1) ? true : false;
+	    	ctPlayer.isVanished = (rs.getInt("vanished") == 1) ? true : false;
+	    	ctPlayer.firstJoin = rs.getLong("first_join");
+	    	ctPlayer.lastSeen = rs.getLong("last_seen");
+    	} catch (SQLException e) {
+    		e.printStackTrace();
+    	}
+    	return ctPlayer;
+    }
+
+
+    public void readPlayersFromDB() {
+    	 main.getProxy().getScheduler().runAsync(main, new Runnable() {
+             public void run() {            	 
+                 try {
+                	connection = main.getConnection();
+                	statement = connection.prepareStatement("SELECT * FROM " + main.getTablePrefix() + "players");
+         			resultSet = statement.executeQuery();
+
+                    while (resultSet.next()) {
+                    	String uuid = resultSet.getString("uuid");
+                    	String name = resultSet.getString("name");
+                    	
+                    	CTPlayer ctPlayer = new CTPlayer(uuid);
+                    	ctPlayer = getUpdatedPlayer(ctPlayer, resultSet);
+                    	players.put(uuid, ctPlayer);
+                        names.put(uuid, name);
+                    }
+                 } catch (SQLException e) {
+                	 e.printStackTrace();
+                 } finally {
+		            if (resultSet != null) {
+		                try { resultSet.close(); }
+		                catch (SQLException e) { e.printStackTrace(); }
+		            }
+		            if (statement != null) {
+		                try { statement.close(); }
+		                catch (SQLException e) { e.printStackTrace(); }
+		            }
+		            if (connection != null) {
+		                try { connection.close(); }
+		                catch (SQLException e) { e.printStackTrace(); }
+		            }
+		         }
+             }
+    	 });
+    }
+    
+    public void addProxiedPlayer(ProxiedPlayer p) {
     	proxiedPlayers.put(p.getUniqueId().toString(), p);
     }
     
@@ -98,31 +198,66 @@ public class PlayerHandler {
     	final String uuid = p.getUniqueId().toString();
     	
         main.getProxy().getScheduler().runAsync(main, new Runnable() {
-            public void run() {
-                String sql = 
-                  "UPDATE " + main.getTablePrefix() + "players SET " +
-                    "name = '" + p.getName() + "', " +
-                    "online = 0, " + 
-                    "last_seen = now() " +
-                  "WHERE uuid = '" + uuid + "'";
+            public void run() {                
                 try {
-                    main.getHikari().getConnection().createStatement().execute(sql);
+                	connection = main.getConnection();
+                    statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET name = ?, online = 0, last_seen = now() WHERE uuid = ?;");
+                    statement.setString(1, p.getName());
+                    statement.setString(2, uuid);
+        			statement.execute();
                 } catch (SQLException e) {
                     e.printStackTrace();
-                }
+                } finally {
+		           if (statement != null) {
+		               try { statement.close(); }
+		               catch (SQLException e) { e.printStackTrace(); }
+		           }
+		           if (connection != null) {
+		               try { connection.close(); }
+		               catch (SQLException e) { e.printStackTrace(); }
+		           }
+		        }
             }
         });
+        
+        if (players.containsKey(uuid))
+        	players.get(uuid).isOnline = false;
         
         if (proxiedPlayers.containsKey(uuid))
         	proxiedPlayers.remove(uuid);
     }
     
-    public ProxiedPlayer getProxiedPlayer(String uuid) {
-    	if (proxiedPlayers.containsKey(uuid))
-    		return proxiedPlayers.get(uuid);
-    	else
-    		return null;
+    public String getUUID(String playerName) {
+    	for (String uuid : names.keySet()) {
+    		String name = names.get(uuid);
+    		if (name.equalsIgnoreCase(playerName))
+    			return uuid;
+    	}
+    	return null;
+
     }
+    
+    public String getName(String uuid) {
+    	if (names.containsKey(uuid))
+    		return names.get(uuid);
+    	return null;
+    }
+    
+    public CTPlayer getPlayer(String uuid) {
+		if (players.containsKey(uuid))
+			return players.get(uuid);
+		return null;
+    }
+    
+    public CTPlayer getPlayerByName(String name) {
+    	String uuid = getUUID(name);
+		System.out.println("UUID -> " + uuid);
+    	if (uuid != null && players.containsKey(uuid)) {
+			return players.get(uuid);
+		}
+		return null;
+    }
+    
     
     public void setPrefix(String uuid, String prefix) {
     	players.get(uuid).prefix = prefix;
@@ -141,44 +276,96 @@ public class PlayerHandler {
     	}
     }
     
-	public void updateIsAllowedFlight(String uuid, String senderUUID, boolean isAllowedFlight, boolean apply) {
-		if (apply)
-			setIsAllowedFlight(uuid, isAllowedFlight);
+	public void updateIsAllowedFlight(String playerName, String senderUUID, String mode, boolean apply) {
+		Boolean isAllowedFlight;
+		CTPlayer ctSender = getPlayer(senderUUID);
+		CTPlayer ctPlayer = getPlayerByName(playerName);
 		
-		ProxiedPlayer p = getProxiedPlayer(uuid);
-		
-		if (p.isConnected()) {
-			new TextComponent();
+		if (ctPlayer != null) {
+			ProxiedPlayer player = ctPlayer.getProxiedPlayer();
 			
-			if (isAllowedFlight)
-				p.sendMessage(TextComponent.fromLegacyText("&6Du kannst jetzt fliegen"));
-			else
-				p.sendMessage(TextComponent.fromLegacyText("&6Komm mal wieder auf den Boden"));
+			if (mode.equalsIgnoreCase("on"))
+				isAllowedFlight = true;
+			else if (mode.equalsIgnoreCase("off"))
+				isAllowedFlight = false;
+			else {
+				if (players.get(ctPlayer.uuid).isAllowedFlight)
+					isAllowedFlight = false;
+				else
+					isAllowedFlight = true;
+			}
 			
-			players.get(uuid).isAllowedFlight = isAllowedFlight;
+			if (apply)
+    			setIsAllowedFlight(ctPlayer.uuid, isAllowedFlight);
+
+			System.out.println("Setze Mode auf: " + isAllowedFlight + " Vorher: " + players.get(ctPlayer.uuid).isAllowedFlight);
+			if (players.get(ctPlayer.uuid).isAllowedFlight != isAllowedFlight) {				
+				if (player != null && player.isConnected()) {
+					new TextComponent();
+					
+					if (isAllowedFlight)
+						player.sendMessage(new TextComponent("Du kannst jetzt fliegen"));
+					else
+						player.sendMessage(new TextComponent("Komm mal wieder auf den Boden"));
+				}
+				
+				if (senderUUID != "CONSOLE" && ctSender != null && !ctPlayer.uuid.equals(ctSender.uuid)) {
+					ProxiedPlayer sender = ctSender.getProxiedPlayer();
+					players.get(ctPlayer.uuid).isAllowedFlight = isAllowedFlight;
+					if (sender != null && sender.isConnected()) {
+						if (isAllowedFlight)
+							sender.sendMessage(new TextComponent("Du hast den Flugmodus für " + ctPlayer.name + " aktiviert."));
+						else
+							sender.sendMessage(new TextComponent("Du hast den Flugmodus für " + ctPlayer.name + " deaktiviert."));
+					}
+				}
+			}
+			
+			players.get(ctPlayer.uuid).isAllowedFlight = isAllowedFlight;
+			
+			main.getProxy().getScheduler().runAsync(main, new Runnable() {
+	            public void run() {                	
+	                try {
+	                	connection = main.getConnection();
+	                    statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET allowed_flight = ? WHERE uuid = ?;");
+	                    statement.setInt(1, (isAllowedFlight ? 1 : 0));
+	                    statement.setString(2, ctPlayer.uuid);
+	        			statement.execute();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+					finally {
+			           if (statement != null) {
+			               try { statement.close(); }
+			               catch (SQLException e) { e.printStackTrace(); }
+			           }
+			           if (connection != null) {
+			               try { connection.close(); }
+			               catch (SQLException e) { e.printStackTrace(); }
+			           }
+			        }
+	            }
+	        });
 		}
-		
-        main.getProxy().getScheduler().runAsync(main, new Runnable() {
-            public void run() {
-                String sql = 
-                  "UPDATE " + main.getTablePrefix() + "players SET " +
-                    "allowed_flight = " + (isAllowedFlight ? 1 : 0)  + ", " +
-                    "last_seen = now() " +
-                  "WHERE uuid = '" + uuid + "'";
-                try {
-                    main.getHikari().getConnection().createStatement().execute(sql);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+		else {
+			if (senderUUID != "CONSOLE" && ctSender != null) {
+				ProxiedPlayer sender = ctSender.getProxiedPlayer();
+
+				if (sender != null && sender.isConnected()) {
+					sender.sendMessage(new TextComponent("Es wurde kein Spieler mit dem Namen '" + playerName + "' gefunden"));
+				}
+			}
+		}
 	}
 	
 	public void sendMessage(String uuid, TextComponent text) {
-		ProxiedPlayer p = getProxiedPlayer(uuid);
-		
-		if (p != null) {
-			p.sendMessage(text);
+		if (players.containsKey(uuid)) {
+			CTPlayer ctPlayer = players.get(uuid);
+			ProxiedPlayer p = ctPlayer.getProxiedPlayer();
+			
+			if (p != null && p.isConnected()) {
+				p.sendMessage(text);
+			}
 		}
 	}
 	

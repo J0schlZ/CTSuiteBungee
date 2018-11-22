@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -72,12 +70,12 @@ public class PMessageListener implements Listener {
             	
             	case "bungee.player.update.isAllowedFlight":
             		/*
-            		 * 0 => (str)	uuid
+            		 * 0 => (str)	playerName
             		 * 1 => (str)	senderUUID
             		 * 2 => (bool)	isAllowedFlight
             		 * 3 => (bool)	apply
             		 */
-            		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), ((values.get(2).equals("true")) ? true : false), (values.get(3).equals("true") ? true : false));
+            		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
             		break;
             	
             	case "bungee.player.inform.permissionDenied":

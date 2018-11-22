@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
 import com.google.common.io.ByteStreams;
@@ -64,13 +66,13 @@ public class CTSuite extends Plugin {
             e.printStackTrace();
         }
 
-        this.hikari = new HikariDataSource();
-        this.hikari.setDataSourceClassName("com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
-        this.hikari.addDataSourceProperty("serverName", this.config.get("MySQL.host"));
-        this.hikari.addDataSourceProperty("port", this.config.get("MySQL.port"));
-        this.hikari.addDataSourceProperty("databaseName", this.config.get("MySQL.database"));
-        this.hikari.addDataSourceProperty("user", this.config.get("MySQL.user"));
-        this.hikari.addDataSourceProperty("password", this.config.get("MySQL.password"));
+        hikari = new HikariDataSource();
+        hikari.setDataSourceClassName("com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
+        hikari.addDataSourceProperty("serverName", this.config.get("MySQL.host"));
+        hikari.addDataSourceProperty("port", this.config.get("MySQL.port"));
+        hikari.addDataSourceProperty("databaseName", this.config.get("MySQL.database"));
+        hikari.addDataSourceProperty("user", this.config.get("MySQL.user"));
+        hikari.addDataSourceProperty("password", this.config.get("MySQL.password"));
         
         tablePrefix = this.config.getString("MySQL.prefix");
         dateFormat = new SimpleDateFormat(config.getString("CTSuite.Messages.TimeFormat"));
@@ -110,8 +112,13 @@ public class CTSuite extends Plugin {
         return playerHandler;
     }
     
-    public HikariDataSource getHikari() {
-        return this.hikari;
+    public Connection getConnection() {
+        try {
+			return this.hikari.getConnection();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
     }
     
     public SimpleDateFormat getDateFormat() {
