@@ -258,7 +258,6 @@ public class PlayerHandler {
 		return null;
     }
     
-    
     public void setPrefix(String uuid, String prefix) {
     	players.get(uuid).prefix = prefix;
     }
