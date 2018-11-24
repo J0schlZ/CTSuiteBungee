@@ -17,19 +17,21 @@ public class PMessage {
 	public PMessage(CTSuite main, String name) {
 		this.main = main;
 		this.messageName = name;
-		values = new ArrayList<String>();
+		this.values = new ArrayList<String>();
 	}
 	
 	public void put(String value) {
-		values.add(value);
+		this.values.add(value);
 	}
 	
 	public void send(String serverName) {
 		ServerInfo serverInfo = null;
 		try { serverInfo = main.getProxy().getServers().get(serverName); } catch (Exception e) { }
-		final ServerInfo serverInstance = serverInfo;
 		
-		if (serverInstance != null) {
+		final ServerInfo serverInstance = serverInfo;
+		final ArrayList<String> values = this.values;
+		
+		if (serverInstance != null) {			
 			main.getProxy().getScheduler().runAsync(main, new Runnable() {
 	    		@Override
 	    		public void run() {

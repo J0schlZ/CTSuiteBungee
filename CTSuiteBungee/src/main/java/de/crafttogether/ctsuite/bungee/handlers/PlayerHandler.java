@@ -5,11 +5,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
 import de.crafttogether.ctsuite.bungee.util.PMessage;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
@@ -100,6 +102,22 @@ public class PlayerHandler {
                 catch (SQLException e) { e.printStackTrace(); }
             }
         }
+    }
+    
+    public void sendPlayerListToServer(String server) {
+		PMessage pm = new PMessage(main, "bukkit.data.update.onlinePlayers");
+		for (ProxiedPlayer p : main.getPlayerHandler().proxiedPlayers.values()) {
+		    if (p.isConnected())
+		    	pm.put(p.getUniqueId().toString() + ":" + p.getName());
+		}
+		pm.send(server);
+	}
+    
+    public void sendPlayerListToAllServers() {
+    	Map<String, ServerInfo> servers = main.getProxy().getServers();
+    	for (String server : servers.keySet()) {
+    		sendPlayerListToServer(server);
+    	}
     }
     
     public void firstLogin (String uuid, String name) {   	

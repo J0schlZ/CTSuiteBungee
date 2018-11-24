@@ -11,6 +11,7 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -100,6 +101,13 @@ public class PMessageListener implements Listener {
             		text = new TextComponent(values.get(1));
             		text.setColor(ChatColor.WHITE);
             		main.getPlayerHandler().sendMessage(values.get(0), text);
+            		break;
+            		
+            	case "bungee.data.request.onlinePlayers":
+            		/*
+            		 * 0 => (str)	server
+            		 */
+            		main.getPlayerHandler().sendPlayerListToServer(values.get(0));
             		break;
             }
     	}

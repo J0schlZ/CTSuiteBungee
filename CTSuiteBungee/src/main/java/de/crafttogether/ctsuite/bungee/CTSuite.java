@@ -19,7 +19,9 @@ import de.crafttogether.ctsuite.bungee.events.PlayerLoginListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerPostLoginListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerSwitchedServerListener;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
+import de.crafttogether.ctsuite.bungee.util.PMessage;
 import de.crafttogether.ctsuite.bungee.util.PMessageListener;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -92,13 +94,10 @@ public class CTSuite extends Plugin {
     }
 
     public void onDisable() {
-        if (this.hikari != null) {
-        	try {
-        		this.hikari.close();
-        	}
-        	catch (Exception ex) {
-        		System.out.println(ex);
-        	}
+        if (hikari != null) {
+            try {
+                hikari.close();
+            } catch (Exception e) { }
         }
     }
     

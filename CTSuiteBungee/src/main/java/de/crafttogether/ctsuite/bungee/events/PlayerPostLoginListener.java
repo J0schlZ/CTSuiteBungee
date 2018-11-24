@@ -15,5 +15,6 @@ public class PlayerPostLoginListener implements Listener {
     @EventHandler
     public void onPostLogin(PostLoginEvent ev) {
     	main.getPlayerHandler().addProxiedPlayer(ev.getPlayer());
+    	main.getPlayerHandler().sendPlayerListToAllServers();
     }
 }
