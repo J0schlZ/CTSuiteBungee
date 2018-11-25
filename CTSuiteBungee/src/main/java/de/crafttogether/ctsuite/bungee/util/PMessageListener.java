@@ -11,7 +11,6 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -69,16 +68,26 @@ public class PMessageListener implements Listener {
             		main.getPlayerHandler().setPrefix(values.get(0), values.get(1));
             		main.getPlayerHandler().setSuffix(values.get(0), values.get(2));
             		break;
-            	
-            	case "bungee.player.update.isAllowedFlight":
-            		/*
-            		 * 0 => (str)	playerName
-            		 * 1 => (str)	senderUUID
-            		 * 2 => (str)	on|off|toggle
-            		 * 3 => (bool)	apply
-            		 */
-            		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
-            		break;
+                	
+                	case "bungee.player.update.isAllowedFlight":
+                		/*
+                		 * 0 => (str)	playerName
+                		 * 1 => (str)	senderUUID
+                		 * 2 => (str)	on|off|toggle
+                		 * 3 => (bool)	apply
+                		 */
+                		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
+                		break;
+                    	
+                	case "bungee.player.update.gameMode":
+                		/*
+                		 * 0 => (str)	playerName
+                		 * 1 => (str)	senderUUID
+                		 * 2 => (str)	gameMode
+                		 * 3 => (bool)	apply
+                		 */
+                		main.getPlayerHandler().updateGamemode(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
+                		break;
             	
             	case "bungee.player.inform.permissionDenied":
             		/*

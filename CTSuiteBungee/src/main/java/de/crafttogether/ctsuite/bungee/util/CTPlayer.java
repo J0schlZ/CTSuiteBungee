@@ -13,11 +13,11 @@ public class CTPlayer {
 	public String nickname = null;
 	public String server = null;
 	public String world = null;
-	public boolean isOnline = false;
-	public Integer gamemode = 0;
-	public Boolean isFlying = false;
-	public Boolean isAllowedFlight = false;
-	public Boolean isVanished = false;
+	public Boolean isOnline = null;
+	public String gameMode = null;
+	public Boolean isFlying = null;
+	public Boolean isAllowedFlight = null;
+	public Boolean isVanished = null;
 	public long firstJoin = 0;
 	public long lastSeen = 0;
 	
@@ -45,7 +45,7 @@ public class CTPlayer {
 	    	this.server = rs.getString("server");
 	    	this.world = rs.getString("world");
 	    	this.isOnline = (rs.getInt("online") == 1) ? true : false;
-	    	this.gamemode = rs.getInt("gamemode");
+	    	this.gameMode = rs.getString("gamemode");
 	    	this.isFlying = (rs.getInt("flying") == 1) ? true : false;
 	    	this.isAllowedFlight = (rs.getInt("allowed_flight") == 1) ? true : false;
 	    	this.isVanished = (rs.getInt("vanished") == 1) ? true : false;

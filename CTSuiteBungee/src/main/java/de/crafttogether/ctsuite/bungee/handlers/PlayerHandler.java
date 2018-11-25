@@ -300,6 +300,15 @@ public class PlayerHandler {
     	}
     }
     
+    public void setGameMode(String uuid, String gameMode) {
+    	if (players.containsKey(uuid)) {
+	    	PMessage pm = new PMessage(main, "bukkit.player.set.gameMode");
+	    	pm.put(uuid); // Using name instead of UUID because players on servers in offline-mode doesn't have same UUID as provied by Mojang
+	    	pm.put(gameMode);
+	    	pm.send(players.get(uuid).server);
+    	}
+    }
+    
 	public void updateIsAllowedFlight(String playerName, String senderUUID, String mode, boolean apply) {
 		Boolean isAllowedFlight;
 		CTPlayer ctSender = getPlayer(senderUUID);
@@ -323,9 +332,7 @@ public class PlayerHandler {
     			setIsAllowedFlight(ctPlayer.uuid, isAllowedFlight);
 
 			if (players.get(ctPlayer.uuid).isAllowedFlight != isAllowedFlight) {				
-				if (player != null && player.isConnected()) {
-					new TextComponent();
-					
+				if (player != null && player.isConnected()) {					
 					if (isAllowedFlight)
 						player.sendMessage(new TextComponent("Du kannst jetzt fliegen"));
 					else
@@ -334,7 +341,6 @@ public class PlayerHandler {
 				
 				if (senderUUID != "CONSOLE" && ctSender != null && !ctPlayer.uuid.equals(ctSender.uuid)) {
 					ProxiedPlayer sender = ctSender.getProxiedPlayer();
-					players.get(ctPlayer.uuid).isAllowedFlight = isAllowedFlight;
 					if (sender != null && sender.isConnected()) {
 						if (isAllowedFlight)
 							sender.sendMessage(new TextComponent("Du hast den Flugmodus für " + ctPlayer.name + " aktiviert."));
@@ -352,9 +358,74 @@ public class PlayerHandler {
 	                Connection connection = null;
 	                
 	                try {
+	                	String isFlying = (isAllowedFlight ? "": "flying = 0, ");
+	                	
 	                	connection = main.getConnection();
-	                    statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET allowed_flight = ? WHERE uuid = ?;");
+	                    statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET " + isFlying + "allowed_flight = ? WHERE uuid = ?;");
 	                    statement.setInt(1, (isAllowedFlight ? 1 : 0));
+	                    statement.setString(2, ctPlayer.uuid);
+	        			statement.execute();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+					finally {
+			           if (statement != null) {
+			               try { statement.close(); }
+			               catch (SQLException e) { e.printStackTrace(); }
+			           }
+			           if (connection != null) {
+			               try { connection.close(); }
+			               catch (SQLException e) { e.printStackTrace(); }
+			           }
+			        }
+	            }
+	        });
+		}
+		else {
+			if (senderUUID != "CONSOLE" && ctSender != null) {
+				ProxiedPlayer sender = ctSender.getProxiedPlayer();
+
+				if (sender != null && sender.isConnected()) {
+					sender.sendMessage(new TextComponent("Es wurde kein Spieler mit dem Namen '" + playerName + "' gefunden"));
+				}
+			}
+		}
+	}
+
+	public void updateGamemode(String playerName, String senderUUID, String gameMode, boolean apply) {
+		CTPlayer ctSender = getPlayer(senderUUID);
+		CTPlayer ctPlayer = getPlayerByName(playerName);
+		gameMode = gameMode.toUpperCase();
+		
+		if (ctPlayer != null) {
+			ProxiedPlayer player = ctPlayer.getProxiedPlayer();
+						
+			if (apply)
+    			setGameMode(ctPlayer.uuid, gameMode);
+			
+			if (player != null && player.isConnected())
+				player.sendMessage(new TextComponent("Dein GameMode wurde auf '" + gameMode + "' gesetzt."));
+			
+			if (senderUUID != "CONSOLE" && ctSender != null && !ctPlayer.uuid.equals(ctSender.uuid)) {
+				ProxiedPlayer sender = ctSender.getProxiedPlayer();				
+				if (sender != null && sender.isConnected())
+					sender.sendMessage(new TextComponent("GameMode für " + ctPlayer.name + " wurde auf '" + gameMode + "' gesetzt."));
+			}
+			
+			players.get(ctPlayer.uuid).gameMode = gameMode;
+			final String finalMode = gameMode;
+			
+			main.getProxy().getScheduler().runAsync(main, new Runnable() {
+	            public void run() {
+	                PreparedStatement statement = null;
+	                Connection connection = null;
+	                
+	                try {
+	                	String isFlying = ((finalMode.equals("SURVIVAL") || finalMode.equals("ADVENTURE")) ? "flying = 0, allowed_flight = 0, " : (finalMode.equals("SPECTATOR") ? "flying = 1," : ""));
+	                	
+	                	connection = main.getConnection();
+	                    statement = connection.prepareStatement("UPDATE " + main.getTablePrefix() + "players SET " + isFlying + "gamemode = ? WHERE uuid = ?;");
+	                    statement.setString(1, finalMode);
 	                    statement.setString(2, ctPlayer.uuid);
 	        			statement.execute();
 	                } catch (SQLException e) {
@@ -398,4 +469,5 @@ public class PlayerHandler {
 	public void broadcast (TextComponent text) {
 		main.getProxy().broadcast(text);
 	}
+
 }
