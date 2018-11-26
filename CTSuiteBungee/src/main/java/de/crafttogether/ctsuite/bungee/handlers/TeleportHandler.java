@@ -14,7 +14,6 @@ public class TeleportHandler {
 	public void playerToPlayer(String playerName, String targetName) {
 		CTPlayer player = main.getPlayerHandler().getPlayerByName(playerName);
 		CTPlayer target = main.getPlayerHandler().getPlayerByName(targetName);
-		
 	}
 
 	public void playerToPos(String playerName, String strLocation) {
