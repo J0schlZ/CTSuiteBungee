@@ -15,6 +15,5 @@ public class PlayerLeaveListener implements Listener {
     @EventHandler
     public void onPlayerLeave(PlayerDisconnectEvent ev) {
     	main.getPlayerHandler().registerLogout(ev.getPlayer());
-    	main.getPlayerHandler().sendPlayerListToAllServers();
     }
 }

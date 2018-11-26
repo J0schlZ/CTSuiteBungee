@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -24,14 +25,8 @@ public class PMessage {
 		this.values.add(value);
 	}
 	
-	public void send(String serverName) {
-		ServerInfo serverInfo = null;
-		try { serverInfo = main.getProxy().getServers().get(serverName); } catch (Exception e) { }
-		
-		final ServerInfo serverInstance = serverInfo;
-		final ArrayList<String> values = this.values;
-		
-		if (serverInstance != null) {			
+	public void send(ServerInfo server) {
+		if (server != null) {			
 			main.getProxy().getScheduler().runAsync(main, new Runnable() {
 	    		@Override
 	    		public void run() {
@@ -45,9 +40,9 @@ public class PMessage {
 	                    
 	                    b.close();
 	                    out.close();
-	                    serverInstance.sendData("ctsuite:bukkit", b.toByteArray());
+	                    server.sendData("ctsuite:bukkit", b.toByteArray());
 	                    
-	                    System.out.println("[PMessage][Bungee->" + serverName + "]: " + messageName);
+	                    System.out.println("[PMessage][Bungee->" + server.getName() + "]: " + messageName);
 	                } catch (IOException e) {
 	                    e.printStackTrace();
 	                } finally {
@@ -62,7 +57,19 @@ public class PMessage {
 	    	});
 		}
 		else {
-			System.out.println("[PMessage]: Unkown Server '" + serverName + "' Unable to send this message! [" + messageName + "]");
+			System.out.println("[PMessage]: Unable to send this message! [" + messageName + "]");
 		}
+	}
+	
+	public void send(String serverName) {
+		ServerInfo server = null;
+		try { server = main.getProxy().getServers().get(serverName); } catch (Exception e) { }
+		this.send(server);
+	}
+	
+	public void sendAll() {
+    	Map<String, ServerInfo> servers = main.getProxy().getServers();
+    	for (String server : servers.keySet())
+    		this.send(server);
 	}
 }

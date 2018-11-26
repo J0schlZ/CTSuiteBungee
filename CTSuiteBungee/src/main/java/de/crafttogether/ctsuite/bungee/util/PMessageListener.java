@@ -59,35 +59,56 @@ public class PMessageListener implements Listener {
             TextComponent text;
             switch(messageName) {
             	
-            	case "bungee.player.update.prefixSuffix":
+            	case "bungee.player.update.joined":
             		/*
-            		 *  0 => (str)	uuid
-            		 *	1 => (str)	prefix
-            		 *  2 => (str)	suffix
+            		 *  0 => (str)	uuid		
+            		 *  1 => (str)	server			
+            		 *  2 => (str)	world				
+            		 *  3 => (str)	prefix			
+            		 *  4 => (str)	suffix
             		 */
-            		main.getPlayerHandler().setPrefix(values.get(0), values.get(1));
-            		main.getPlayerHandler().setSuffix(values.get(0), values.get(2));
+            		main.getPlayerHandler().setServer(values.get(0), values.get(1));
+            		main.getPlayerHandler().setWorld(values.get(0), values.get(2));
+            		main.getPlayerHandler().setPrefix(values.get(0), values.get(3));
+            		main.getPlayerHandler().setSuffix(values.get(0), values.get(4));
+            		main.getPlayerHandler().sendPlayerListToServer("all");
             		break;
                 	
-                	case "bungee.player.update.isAllowedFlight":
-                		/*
-                		 * 0 => (str)	playerName
-                		 * 1 => (str)	senderUUID
-                		 * 2 => (str)	on|off|toggle
-                		 * 3 => (bool)	apply
-                		 */
-                		main.getPlayerHandler().updateIsAllowedFlight(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
-                		break;
-                    	
-                	case "bungee.player.update.gameMode":
-                		/*
-                		 * 0 => (str)	playerName
-                		 * 1 => (str)	senderUUID
-                		 * 2 => (str)	gameMode
-                		 * 3 => (bool)	apply
-                		 */
-                		main.getPlayerHandler().updateGamemode(values.get(0), values.get(1), values.get(2), (values.get(3).equals("true") ? true : false));
-                		break;
+            	case "bungee.player.cmd.fly":
+            		/*
+            		 * 0 => (str)	senderUUID
+            		 * 1 => (str)	targetName
+            		 * 2 => (str)	on|off|toggle
+            		 * 3 => (bool)	apply
+            		 */
+            		main.getPlayerHandler().updateIsAllowedFlight(values.get(1), values.get(0), values.get(2), (values.get(3).equals("true") ? true : false));
+            		break;
+                	
+            	case "bungee.player.cmd.gamemode":
+            		/*
+            		 * 0 => (str)	senderUUID
+            		 * 1 => (str)	targetName
+            		 * 2 => (str)	gameMode
+            		 * 3 => (bool)	apply
+            		 */
+            		main.getPlayerHandler().updateGamemode(values.get(1), values.get(0), values.get(2), (values.get(3).equals("true") ? true : false));
+            		break;
+            		
+            	case "bungee.player.cmd.tp":
+            		/*
+            		 * 0 => (str)	playerName
+            		 * 1 => (str) 	targetName
+            		 */
+            		main.getTeleportHandler().playerToPlayer(values.get(0), values.get(1));
+            		break;
+            		
+            	case "bungee.player.cmd.tppos":
+            		/*
+            		 * 0 => (str)	playerName
+            		 * 1 => (str) 	location 'server:world:x:y:z:yaw:pitch'
+            		 */
+            		main.getTeleportHandler().playerToPos(values.get(0), values.get(1));
+            		break;
             	
             	case "bungee.player.inform.permissionDenied":
             		/*
@@ -111,7 +132,7 @@ public class PMessageListener implements Listener {
             		text.setColor(ChatColor.WHITE);
             		main.getPlayerHandler().sendMessage(values.get(0), text);
             		break;
-            		
+
             	case "bungee.data.request.onlinePlayers":
             		/*
             		 * 0 => (str)	server

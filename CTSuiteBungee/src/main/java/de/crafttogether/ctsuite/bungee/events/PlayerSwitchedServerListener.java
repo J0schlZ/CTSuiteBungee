@@ -4,6 +4,7 @@ import de.crafttogether.ctsuite.bungee.CTSuite;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+import net.md_5.bungee.event.EventPriority;
 
 public class PlayerSwitchedServerListener implements Listener {
     private CTSuite main;
@@ -12,8 +13,8 @@ public class PlayerSwitchedServerListener implements Listener {
         this.main = main;
     }
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.HIGHEST)
     public void onServerSwitch(ServerSwitchEvent ev) {
-    	main.getPlayerHandler().updatePlayer(ev.getPlayer());
+    	main.getPlayerHandler().updatePlayerServer(ev.getPlayer());
     }
 }

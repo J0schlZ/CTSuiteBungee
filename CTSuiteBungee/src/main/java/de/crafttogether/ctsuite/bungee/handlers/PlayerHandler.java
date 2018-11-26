@@ -1,11 +1,11 @@
 package de.crafttogether.ctsuite.bungee.handlers;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Map;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
@@ -14,6 +14,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 
 public class PlayerHandler {
     private CTSuite main;
@@ -105,19 +106,31 @@ public class PlayerHandler {
     }
     
     public void sendPlayerListToServer(String server) {
-		PMessage pm = new PMessage(main, "bukkit.data.update.onlinePlayers");
+    	PMessage pm = new PMessage(main, "bukkit.data.update.onlinePlayers");
 		for (ProxiedPlayer p : main.getPlayerHandler().proxiedPlayers.values()) {
-		    if (p.isConnected())
-		    	pm.put(p.getUniqueId().toString() + ":" + p.getName());
+		    if (p.isConnected()) {
+		    	Server srv = null;
+		    	ServerInfo srvInfo = null;
+		    	String srvName = null;
+		    	srv = p.getServer();
+		    	
+		    	if (srv != null) {
+		    		srvInfo = srv.getInfo();
+		    		if (srvInfo != null);
+		    			srvName = srvInfo.getName();
+		    	}
+		    	
+		    	if (srvName == null)
+		    		srvName = main.getPlayerHandler().getPlayer(p.getUniqueId().toString()).server;
+		    	
+		    	pm.put(p.getUniqueId() + ":" + p.getName() + ":" + srvName);
+		    }
 		}
-		pm.send(server);
-	}
-    
-    public void sendPlayerListToAllServers() {
-    	Map<String, ServerInfo> servers = main.getProxy().getServers();
-    	for (String server : servers.keySet()) {
-    		sendPlayerListToServer(server);
-    	}
+		
+		if (server.equals("all"))
+			pm.sendAll();
+		else
+			pm.send(server);
     }
     
     public void firstLogin (String uuid, String name) {   	
@@ -127,7 +140,8 @@ public class PlayerHandler {
                 Connection connection = null;
                 
             	long currentTimestamp = System.currentTimeMillis() / 1000;
-				
+				Date currentDate = new Date((long) currentTimestamp*1000);
+            	
 				try {
 					connection = main.getConnection();
 					statement = connection.prepareStatement(
@@ -139,8 +153,8 @@ public class PlayerHandler {
 	                statement.setString(1, uuid);
 	                statement.setString(2, name);
 	                statement.setInt(3, 1);
-	                statement.setLong(4, currentTimestamp);
-	                statement.setLong(5, currentTimestamp);
+	                statement.setDate(4, currentDate);
+	                statement.setDate(5, currentDate);
 	    			statement.execute();
 				} catch (SQLException e) {
 					e.printStackTrace();
@@ -212,13 +226,23 @@ public class PlayerHandler {
     	proxiedPlayers.put(p.getUniqueId().toString(), p);
     }
     
-    public void updatePlayer(ProxiedPlayer p) {
+    public void updatePlayerServer(ProxiedPlayer p) {
     	String uuid = p.getUniqueId().toString();
-    	players.get(uuid).server = p.getServer().getInfo().getName();
+    	String server = p.getServer().getInfo().getName();
+    	players.get(uuid).server = server;
+    	
+    	PMessage pm = new PMessage(main, "bukkit.data.update.playerServer");
+    	pm.put(uuid);
+    	pm.put(server);
+    	pm.sendAll();
     }
 
     public void registerLogout(ProxiedPlayer p) {
     	final String uuid = p.getUniqueId().toString();
+    	
+    	PMessage pm = new PMessage(main, "bukkit.data.update.playerLeaved");
+    	pm.put(uuid);
+    	pm.sendAll();
     	
         main.getProxy().getScheduler().runAsync(main, new Runnable() {
             public void run() {
@@ -284,11 +308,13 @@ public class PlayerHandler {
     }
     
     public void setPrefix(String uuid, String prefix) {
-    	players.get(uuid).prefix = prefix;
+    	if (players.containsKey(uuid))
+    		players.get(uuid).prefix = prefix;
     }
     
     public void setSuffix(String uuid, String suffix) {
-    	players.get(uuid).suffix = suffix;
+    	if (players.containsKey(uuid))
+    		players.get(uuid).suffix = suffix;
     }
     
     public void setIsAllowedFlight(String uuid, boolean isAllowedFlight) {
@@ -468,6 +494,16 @@ public class PlayerHandler {
 	
 	public void broadcast (TextComponent text) {
 		main.getProxy().broadcast(text);
+	}
+
+	public void setServer(String uuid, String server) {
+		if (players.containsKey(uuid))
+			players.get(uuid).server = server;
+	}
+
+	public void setWorld(String uuid, String server) {
+		if (players.containsKey(uuid))
+			players.get(uuid).server = server;
 	}
 
 }

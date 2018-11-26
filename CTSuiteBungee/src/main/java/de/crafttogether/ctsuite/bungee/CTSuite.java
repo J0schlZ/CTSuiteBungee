@@ -19,6 +19,7 @@ import de.crafttogether.ctsuite.bungee.events.PlayerLoginListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerPostLoginListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerSwitchedServerListener;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
+import de.crafttogether.ctsuite.bungee.handlers.TeleportHandler;
 import de.crafttogether.ctsuite.bungee.util.PMessageListener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -26,13 +27,14 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 
 public class CTSuite extends Plugin {
-	
     private static CTSuite instance;
     private HikariDataSource hikari;
     private Configuration config;
     private String tablePrefix;
     private SimpleDateFormat dateFormat;
+    
     private PlayerHandler playerHandler;
+    private TeleportHandler teleportHandler;
     
     public void onEnable() {
         instance = this;
@@ -78,6 +80,7 @@ public class CTSuite extends Plugin {
         dateFormat = new SimpleDateFormat(config.getString("CTSuite.Messages.TimeFormat"));
 
         playerHandler = new PlayerHandler(this);
+        teleportHandler = new TeleportHandler(this);
         
         getProxy().getPluginManager().registerListener(this, new PlayerLoginListener(this));
         getProxy().getPluginManager().registerListener(this, new PlayerPostLoginListener(this));
@@ -92,23 +95,27 @@ public class CTSuite extends Plugin {
     }
 
     public void onDisable() {
-        if (hikari != null) {
+        if (this.hikari != null) {
             try {
-                hikari.close();
+            	this.hikari.close();
             } catch (Exception e) { }
         }
     }
     
     public Configuration getConfig() {
-        return config;
+        return this.config;
     }
     
     public String getTablePrefix() {
-    	return tablePrefix;
+    	return this.tablePrefix;
     }
 
     public PlayerHandler getPlayerHandler() {
-        return playerHandler;
+        return this.playerHandler;
+    }
+    
+    public TeleportHandler getTeleportHandler() {
+    	return this.teleportHandler;
     }
     
     public Connection getConnection() {
@@ -121,7 +128,7 @@ public class CTSuite extends Plugin {
     }
     
     public SimpleDateFormat getDateFormat() {
-        return dateFormat;
+        return this.dateFormat;
     }
     
     public static CTSuite getInstance() {
