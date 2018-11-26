@@ -27,5 +27,7 @@ public class TeleportHandler {
 		
 		if (ctPlayer == null)
 			return;
+		
+		System.out.println("TELEPORT " + playerName + " " +  location.toString());
 	}
 }

@@ -3,9 +3,9 @@ package de.crafttogether.ctsuite.bungee.util;
 public class Location {
 	private String server;
 	private String world;
-	private int x;
-	private int y;
-	private int z;
+	private float x;
+	private float y;
+	private float z;
 	private float yaw;
 	private float pitch;
 	
@@ -13,37 +13,37 @@ public class Location {
 		
 	}
 	
-	public Location (String server, String world, int x, int y, int z, float yaw, float pitch) {
+	public Location (String server, String world, int x, int y, int z, float pitch, float yaw) {
 		this.server = server;
 		this.world = world;
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		this.yaw = yaw;
 		this.pitch = pitch;
+		this.yaw = yaw;
 	}
 	
 	public Location fromString(String strLocation) {
 		String[] str = strLocation.split(":");
 		this.server = str[0];
 		this.world = str[1];
-		this.x = Integer.parseInt(str[2]);
-		this.y = Integer.parseInt(str[3]);
-		this.z = Integer.parseInt(str[4]);
-		this.yaw = Float.parseFloat(str[5]);
-		this.pitch = Float.parseFloat(str[6]);
+		this.x = Float.parseFloat(str[2]);
+		this.y = Float.parseFloat(str[3]);
+		this.z = Float.parseFloat(str[4]);
+		this.pitch = Float.parseFloat(str[5]);
+		this.yaw = Float.parseFloat(str[4]);
 		return this;
 	}
 	
-	public String getString() {
+	public String toString() {
 		return 
 		  this.server + ":" +
 		  this.world + ":" +
 		  this.x + ":" +
 		  this.y + ":" +
 		  this.z + ":" +
-		  this.yaw + ":" +
-		  this.pitch;
+		  this.pitch + ":" +
+		  this.yaw;
 	}
 	
 	public void setServer(String server) {
@@ -82,15 +82,15 @@ public class Location {
 		return this.world;
 	}
 	
-	public int getX() {
+	public Float getX() {
 		return this.x;
 	}
 	
-	public int getY() {
+	public Float getY() {
 		return this.y;
 	}
 	
-	public int getZ() {
+	public Float getZ() {
 		return this.z;
 	}
 	
