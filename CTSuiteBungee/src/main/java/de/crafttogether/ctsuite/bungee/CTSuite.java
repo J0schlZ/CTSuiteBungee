@@ -1,5 +1,10 @@
 package de.crafttogether.ctsuite.bungee;
 
+import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,43 +13,44 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 
 import com.google.common.io.ByteStreams;
 import com.zaxxer.hikari.HikariDataSource;
 
+import de.crafttogether.ctsuite.bungee.messaging.adapter.Sockets4MC;
 import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerLoginListener;
-import de.crafttogether.ctsuite.bungee.events.PlayerPostLoginListener;
-import de.crafttogether.ctsuite.bungee.events.PlayerSwitchedServerListener;
+import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
-import de.crafttogether.ctsuite.bungee.handlers.TeleportHandler;
-import de.crafttogether.ctsuite.bungee.util.PMessageListener;
-import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
+import de.crafttogether.ctsuite.bungee.handlers.WorldHandler;
 
 public class CTSuite extends Plugin {
-    private static CTSuite instance;
-    private HikariDataSource hikari;
+    private static CTSuite plugin;
     private Configuration config;
+    private HikariDataSource hikari;
+    
     private String tablePrefix;
-    private SimpleDateFormat dateFormat;
-    
+    private String messagingService;
+
+    private MessageHandler messageHandler;
     private PlayerHandler playerHandler;
-    private TeleportHandler teleportHandler;
-    
+    private WorldHandler worldHandler;
+
     public void onEnable() {
-        instance = this;
-        
+    	plugin = this;
+    	
         if (!getDataFolder().exists()) {
-            getDataFolder().mkdir();
+        	this.getDataFolder().mkdir();
         }
         
         File configFile = new File(getDataFolder(), "config.yml");
         File messagesFile = new File(getDataFolder(), "messages.yml");
+        
+        // For development
+        if (messagesFile.exists())
+        	messagesFile.delete();
         
         try {
             if (!configFile.exists()) {
@@ -63,37 +69,61 @@ public class CTSuite extends Plugin {
             throw new RuntimeException("Unable to create file", e);
         }
         try {
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(new FileInputStream(configFile), "UTF8"));
+        	this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(new FileInputStream(configFile), "UTF8"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        hikari = new HikariDataSource();
-        hikari.setDataSourceClassName("com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
-        hikari.addDataSourceProperty("serverName", this.config.get("MySQL.host"));
-        hikari.addDataSourceProperty("port", this.config.get("MySQL.port"));
-        hikari.addDataSourceProperty("databaseName", this.config.get("MySQL.database"));
-        hikari.addDataSourceProperty("user", this.config.get("MySQL.user"));
-        hikari.addDataSourceProperty("password", this.config.get("MySQL.password"));
+    	
+        this.hikari = new HikariDataSource();
+        this.hikari.setDataSourceClassName("com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
+        this.hikari.addDataSourceProperty("serverName", this.config.get("MySQL.host"));
+        this.hikari.addDataSourceProperty("port", this.config.get("MySQL.port"));
+        this.hikari.addDataSourceProperty("databaseName", this.config.get("MySQL.database"));
+        this.hikari.addDataSourceProperty("user", this.config.get("MySQL.user"));
+        this.hikari.addDataSourceProperty("password", this.config.get("MySQL.password"));
         
-        tablePrefix = this.config.getString("MySQL.prefix");
-        dateFormat = new SimpleDateFormat(config.getString("CTSuite.Messages.TimeFormat"));
-
-        playerHandler = new PlayerHandler(this);
-        teleportHandler = new TeleportHandler(this);
+        this.messagingService = "Sockets4MC"; //config.getString("?");
+        this.tablePrefix = config.getString("MySQL.prefix");
         
-        getProxy().getPluginManager().registerListener(this, new PlayerLoginListener(this));
-        getProxy().getPluginManager().registerListener(this, new PlayerPostLoginListener(this));
-        getProxy().getPluginManager().registerListener(this, new PlayerSwitchedServerListener(this));
-        getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener(this));
+        // Choose Messaging Adapter
+        switch (this.messagingService) {
+        	case "Sockets4MC": new Sockets4MC(); break;
+        }
 
-        getProxy().registerChannel("ctsuite:bukkit");
-        getProxy().registerChannel("ctsuite:bungee");
-        getProxy().getPluginManager().registerListener(this, new PMessageListener(this));
+        this.messageHandler = new MessageHandler();
+        this.playerHandler = new PlayerHandler();
+        this.worldHandler = new WorldHandler();
 
-        playerHandler.readPlayersFromDB();
+    	this.getProxy().getPluginManager().registerListener(this, new PlayerLoginListener());
+    	this.getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener());
+        
+    	this.messageHandler.readMessages();
+    	this.playerHandler.readPlayersFromDB();
+    	
+        /*plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
+            public void run() {
+                PreparedStatement statement = null;
+                Connection connection = null;
+                try {
+                	connection = plugin.getMySQLConnection();
+                    statement = connection.prepareStatement("UPDATE " + plugin.getTablePrefix() + "players SET online = 0;");
+        			statement.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } finally {
+		           if (statement != null) {
+		               try { statement.close(); }
+		               catch (SQLException e) { e.printStackTrace(); }
+		           }
+		           if (connection != null) {
+		               try { connection.close(); }
+		               catch (SQLException e) { e.printStackTrace(); }
+		           }
+		        }
+            }
+        });*/
     }
-
+    
     public void onDisable() {
         if (this.hikari != null) {
             try {
@@ -101,37 +131,37 @@ public class CTSuite extends Plugin {
             } catch (Exception e) { }
         }
     }
+
+    public MessageHandler getMessageHandler() {
+    	return this.messageHandler;
+    }
+
+    public PlayerHandler getPlayerHandler() {
+    	return this.playerHandler;
+    }
     
-    public Configuration getConfig() {
-        return this.config;
+    public WorldHandler getWorldHandler() {
+    	return this.worldHandler;
+    }
+    
+    public Connection getMySQLConnection() {
+    	try {
+			return this.hikari.getConnection();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    	return null;
     }
     
     public String getTablePrefix() {
     	return this.tablePrefix;
     }
 
-    public PlayerHandler getPlayerHandler() {
-        return this.playerHandler;
-    }
-    
-    public TeleportHandler getTeleportHandler() {
-    	return this.teleportHandler;
-    }
-    
-    public Connection getConnection() {
-        try {
-			return this.hikari.getConnection();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
-    }
-    
-    public SimpleDateFormat getDateFormat() {
-        return this.dateFormat;
-    }
+	public String getMessagingService() {
+		return this.messagingService;
+	}
     
     public static CTSuite getInstance() {
-        return instance;
+        return plugin;
     }
 }

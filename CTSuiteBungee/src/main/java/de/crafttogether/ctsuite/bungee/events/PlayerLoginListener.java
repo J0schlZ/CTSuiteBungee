@@ -5,23 +5,26 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
+import de.crafttogether.ctsuite.bungee.messaging.NetworkMessage;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
 public class PlayerLoginListener implements Listener {
-    private CTSuite main;
+    private CTSuite plugin;
 
-    public PlayerLoginListener(CTSuite main) {
-        this.main = main;
+    public PlayerLoginListener() {
+        this.plugin = CTSuite.getInstance();
     }
 
     @EventHandler
-    public void onLogin(LoginEvent ev) {
-        ev.registerIntent(main);
+    public void onPlayerLogin(LoginEvent ev) {
+        ev.registerIntent(plugin);
         
         String uuid = ev.getConnection().getUniqueId().toString();
         
@@ -30,8 +33,8 @@ public class PlayerLoginListener implements Listener {
         Connection connection = null;
         
         try {
-        	connection = main.getConnection();
-			statement = connection.prepareStatement("SELECT * FROM " + main.getTablePrefix() + "bans WHERE uuid = ? ORDER BY -(expiration IS NULL), expiration DESC LIMIT 1");
+        	connection = plugin.getMySQLConnection();
+			statement = connection.prepareStatement("SELECT * FROM " + plugin.getTablePrefix() + "bans WHERE uuid = ? ORDER BY -(expiration IS NULL), expiration DESC LIMIT 1");
 			statement.setString(1, uuid);
 			resultSet = statement.executeQuery();
         	
@@ -78,18 +81,30 @@ public class PlayerLoginListener implements Listener {
         }
         */
 
-        
         if (!ev.isCancelled()) {
-            main.getPlayerHandler().registerLogin(ev.getConnection());
-
+        	plugin.getPlayerHandler().registerLogin(ev.getConnection());
+        	
+        	// Broadcast Login
+            plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+                public void run() {
+                	HashMap<String, String> placeHolder = new HashMap<String, String>();
+                	placeHolder.put("player", ev.getConnection().getName());        	
+                	plugin.getMessageHandler().broadcast(plugin.getMessageHandler().getMessage("join.broadcast", placeHolder));
+                }
+            }, 1, TimeUnit.SECONDS);
+        	
             /*
             if (main.getPlayerHandler().getIps().containsKey(ip))
                 main.getPlayerHandler().getIps().put(ip, main.getPlayerHandler().getIps().get(ip) + 1);
             else
                 main.getPlayerHandler().getIps().put(ip, 1);
         	*/
+
+        	NetworkMessage nm = new NetworkMessage("player.update.joined.network");
+        	nm.put("uuid", ev.getConnection().getUniqueId());
+        	nm.send("all");
         }
         
-        ev.completeIntent(main);
+        ev.completeIntent(plugin);
     }
 }
