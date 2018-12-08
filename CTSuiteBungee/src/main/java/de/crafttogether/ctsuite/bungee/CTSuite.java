@@ -24,6 +24,7 @@ import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerLoginListener;
 import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
+import de.crafttogether.ctsuite.bungee.handlers.TeleportHandler;
 import de.crafttogether.ctsuite.bungee.handlers.WorldHandler;
 
 public class CTSuite extends Plugin {
@@ -37,7 +38,8 @@ public class CTSuite extends Plugin {
     private MessageHandler messageHandler;
     private PlayerHandler playerHandler;
     private WorldHandler worldHandler;
-
+    private TeleportHandler teleportHandler;
+    
     public void onEnable() {
     	plugin = this;
     	
@@ -92,6 +94,7 @@ public class CTSuite extends Plugin {
         this.messageHandler = new MessageHandler();
         this.playerHandler = new PlayerHandler();
         this.worldHandler = new WorldHandler();
+        this.teleportHandler = new TeleportHandler();
 
     	this.getProxy().getPluginManager().registerListener(this, new PlayerLoginListener());
     	this.getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener());
@@ -141,6 +144,10 @@ public class CTSuite extends Plugin {
     
     public WorldHandler getWorldHandler() {
     	return this.worldHandler;
+    }
+    
+    public TeleportHandler getTeleportHandler() {
+    	return this.teleportHandler;
     }
     
     public Connection getMySQLConnection() {

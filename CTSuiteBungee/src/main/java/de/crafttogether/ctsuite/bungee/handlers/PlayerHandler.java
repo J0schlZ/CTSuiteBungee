@@ -99,6 +99,19 @@ public class PlayerHandler implements Listener {
                 	(String) ev.getValue("gamemode")
                 );
                 break;
+                
+			case "player.cmd.tppos":
+				this.plugin.getTeleportHandler().onPlayerTPPos(
+					UUID.fromString((String) ev.getValue("uuid")),
+					(Double) ev.getValue("x"),
+					(Double) ev.getValue("y"),
+					(Double) ev.getValue("z"),
+					(String) ev.getValue("world"),
+					(String) ev.getValue("server"),
+					Float.parseFloat((String) ev.getValue("yaw")),
+					Float.parseFloat((String) ev.getValue("pitch"))
+				);
+				break;
 		}
     }
 	
