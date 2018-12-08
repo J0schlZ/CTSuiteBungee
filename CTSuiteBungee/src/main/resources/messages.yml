@@ -12,6 +12,9 @@ fly.disabled.other: '&6Du hast den Flugmodus für &e{player} &cdeaktiviert'
 gamemode.changed: '&6Du befindest dich nun im GameMode: &e{gamemode}'
 gamemode.changed.other: '&6Du hast &e{player} &6in den GameMode &e{gamemode} &6gesetzt'
 
-player.notfound: '&cEs wurde kein Spieler mit dem Namen &e{player} gefunden'
+notfound.player: '&cEs wurde kein Spieler mit dem Namen &e{player} &cgefunden'
+notfound.world: '&cEs gibt keinen Server mit dem Namen &e{world} &cgefunden'
+notfound.server: '&cEs gibt keinen Server mit dem Namen &e{server} &cgefunden'
+
 permission.denied: '&cDazu hast du keine Berechtigung.'
 permission.denied.hover: '{permission}'

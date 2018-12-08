@@ -2,6 +2,7 @@ package de.crafttogether.ctsuite.bungee.handlers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.messaging.NetworkMessageEvent;
@@ -55,4 +56,20 @@ public class WorldHandler implements Listener {
 				break;
 		}
     }
+
+	public String findServer(String serverName) {
+		for (String server : this.server) {
+			if (server.equalsIgnoreCase(serverName))
+				return server;
+		}
+		return null;
+	}
+
+	public String findWorld(String worldName) {
+		for (Entry<String, String> entry : this.worlds.entrySet()) {
+			if (entry.getKey().equalsIgnoreCase(worldName))
+				return entry.getKey();
+		}
+		return null;
+	}
 }

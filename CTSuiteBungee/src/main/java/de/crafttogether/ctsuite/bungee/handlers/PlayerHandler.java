@@ -7,13 +7,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.messaging.NetworkMessage;
 import de.crafttogether.ctsuite.bungee.messaging.NetworkMessageEvent;
 import de.crafttogether.ctsuite.bungee.messaging.ServerConnectedEvent;
+import de.crafttogether.ctsuite.bungee.util.CTLocation;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -61,6 +62,25 @@ public class PlayerHandler implements Listener {
 				);
 				break;
 				
+			case "player.update.leaved.server":
+				this.onPlayerLeavedServer(
+					UUID.fromString((String) ev.getValue("uuid")),
+					CTLocation.fromString((String) ev.getValue("location"))
+				);
+				break;
+				
+			case "player.update.kicked.server":
+				this.onPlayerLeavedServer(
+					UUID.fromString((String) ev.getValue("uuid")),
+					CTLocation.fromString((String) ev.getValue("location"))
+				);
+				this.onPlayerKickedServer(
+					UUID.fromString((String) ev.getValue("uuid")),
+					(String) ev.getValue("reason"),
+					(String) ev.getValue("message")
+				);
+				break;
+				
 			case "player.cmd.fly":
 				this.onFlyCommand(
 					(String) ev.getValue("targetName"),
@@ -100,41 +120,64 @@ public class PlayerHandler implements Listener {
                 );
                 break;
                 
-			case "player.cmd.tppos":
-				this.plugin.getTeleportHandler().onPlayerTPPos(
+			case "player.teleport.location":				
+				this.onPlayerTeleportLocation(
 					UUID.fromString((String) ev.getValue("uuid")),
-					(Double) ev.getValue("x"),
-					(Double) ev.getValue("y"),
-					(Double) ev.getValue("z"),
-					(String) ev.getValue("world"),
-					(String) ev.getValue("server"),
-					Float.parseFloat((String) ev.getValue("yaw")),
-					Float.parseFloat((String) ev.getValue("pitch"))
+					CTLocation.fromString((String) ev.getValue("location"))
+				);
+				break;
+                
+			case "player.teleport.player":
+				this.plugin.getTeleportHandler().toPlayer(
+					UUID.fromString((String) ev.getValue("uuid")),
+					UUID.fromString((String) ev.getValue("target"))
+				);
+				break;
+                
+			case "player.teleport.spawn":
+				this.plugin.getTeleportHandler().toSpawn(
+					UUID.fromString((String) ev.getValue("uuid")),
+					(String) ev.getValue("spawn")
 				);
 				break;
 		}
     }
-	
+
 	private void onPlayerChangedGamemode(UUID uuid, String gameMode) {
+		if (!this.players.containsKey(uuid)) return;
 		this.players.get(uuid).gameMode = gameMode;
 		this.players.get(uuid).save();
 	}
 
 	private void onToggledFlight(UUID uuid, Boolean isFlying) {
+		if (!this.players.containsKey(uuid)) return;
 		this.players.get(uuid).isFlying = isFlying;
 		this.players.get(uuid).save();
 	}
 
 	private void onPlayerWorldChange(UUID uuid, String world) {
+		if (!this.players.containsKey(uuid)) return;
 		this.players.get(uuid).world = world;
 		this.players.get(uuid).save();
 	}
 
 	private void onPlayerJoinedServer(UUID uuid, String server, String world, String prefix, String suffix) {
+		if (!this.players.containsKey(uuid)) return;
 		this.players.get(uuid).server = server;
 		this.players.get(uuid).world = world;
 		this.players.get(uuid).prefix = prefix;
 		this.players.get(uuid).suffix = suffix;
+		this.players.get(uuid).save();
+	}
+	
+	private void onPlayerKickedServer(UUID uuid, String reason, String leaveMessage) {
+		if (!this.players.containsKey(uuid)) return;
+		// TODO Auto-generated method stub
+	}
+
+	private void onPlayerLeavedServer(UUID uuid, CTLocation logoutLocation) {
+		if (!this.players.containsKey(uuid)) return;
+		this.players.get(uuid).logoutLocation = logoutLocation;
 		this.players.get(uuid).save();
 	}
 	
@@ -235,7 +278,7 @@ public class PlayerHandler implements Listener {
 				HashMap<String, String> placeHolders = new HashMap<String, String>();
 				placeHolders.put("target", targetName);
 				placeHolders.put("sender", ctSender.name);
-				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("player.notfound", placeHolders));
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.player", placeHolders));
 			}
 		}
 	}
@@ -320,7 +363,31 @@ public class PlayerHandler implements Listener {
 				HashMap<String, String> placeHolders = new HashMap<String, String>();
 				placeHolders.put("target", targetName);
 				placeHolders.put("sender", ctSender.name);
-				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("player.notfound", placeHolders));
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.player", placeHolders));
+			}
+		}
+	}
+	
+
+	public void onPlayerTeleportLocation(UUID uuid, CTLocation loc) {
+		ProxiedPlayer sender = plugin.getProxy().getPlayer(uuid);
+		HashMap<String, String> placeHolders = new HashMap<String, String>();
+		
+		plugin.getTeleportHandler().toLocation(uuid, loc);
+		
+		if (sender != null && sender.isConnected()) {
+			if (plugin.getWorldHandler().findServer(loc.getServer()) == null) {
+				placeHolders.put("sender", sender.getName());
+				placeHolders.put("server", loc.getServer());
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.server", placeHolders));
+				return;
+			}
+			
+			if (plugin.getWorldHandler().findWorld(loc.getWorld()) == null) {
+				placeHolders.put("sender", sender.getName());
+				placeHolders.put("world", loc.getWorld());
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.world", placeHolders));
+				return;
 			}
 		}
 	}

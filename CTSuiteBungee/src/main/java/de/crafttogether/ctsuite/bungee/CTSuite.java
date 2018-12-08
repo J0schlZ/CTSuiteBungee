@@ -1,10 +1,5 @@
 package de.crafttogether.ctsuite.bungee;
 
-import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -19,13 +14,18 @@ import java.sql.SQLException;
 import com.google.common.io.ByteStreams;
 import com.zaxxer.hikari.HikariDataSource;
 
-import de.crafttogether.ctsuite.bungee.messaging.adapter.Sockets4MC;
 import de.crafttogether.ctsuite.bungee.events.PlayerLeaveListener;
 import de.crafttogether.ctsuite.bungee.events.PlayerLoginListener;
 import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
 import de.crafttogether.ctsuite.bungee.handlers.TeleportHandler;
 import de.crafttogether.ctsuite.bungee.handlers.WorldHandler;
+import de.crafttogether.ctsuite.bungee.messaging.adapter.Sockets4MC;
+import de.crafttogether.ctsuite.bungee.util.CTLocation;
+import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
 
 public class CTSuite extends Plugin {
     private static CTSuite plugin;
