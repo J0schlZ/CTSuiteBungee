@@ -41,9 +41,8 @@ public class CTSuite extends Plugin {
     public void onEnable() {
     	plugin = this;
     	
-        if (!getDataFolder().exists()) {
+        if (!getDataFolder().exists()) 
         	this.getDataFolder().mkdir();
-        }
         
         File configFile = new File(getDataFolder(), "config.yml");
         File messagesFile = new File(getDataFolder(), "messages.yml");
@@ -99,18 +98,20 @@ public class CTSuite extends Plugin {
         
     	this.messageHandler.readMessages();
     	this.playerHandler.readPlayersFromDB();
-    	
-        /*plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
-            public void run() {
-                PreparedStatement statement = null;
-                Connection connection = null;
-                try {
-                	connection = plugin.getMySQLConnection();
-                    statement = connection.prepareStatement("UPDATE " + plugin.getTablePrefix() + "players SET online = 0;");
-        			statement.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                } finally {
+    }
+    
+    public void onDisable() {
+        plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
+		    public void run() {
+		        PreparedStatement statement = null;
+		        Connection connection = null;
+		        try {
+		        	connection = plugin.getMySQLConnection();
+		            statement = connection.prepareStatement("UPDATE " + plugin.getTablePrefix() + "players SET online = 0;");
+					statement.execute();
+		        } catch (SQLException e) {
+		            e.printStackTrace();
+		        } finally {
 		           if (statement != null) {
 		               try { statement.close(); }
 		               catch (SQLException e) { e.printStackTrace(); }
@@ -120,16 +121,14 @@ public class CTSuite extends Plugin {
 		               catch (SQLException e) { e.printStackTrace(); }
 		           }
 		        }
-            }
-        });*/
-    }
-    
-    public void onDisable() {
-        if (this.hikari != null) {
-            try {
-            	this.hikari.close();
-            } catch (Exception e) { }
-        }
+		        
+		        if (plugin.hikari != null) {
+		            try {
+		            	plugin.hikari.close();
+		            } catch (Exception e) { }
+		        }
+		    }
+		});
     }
 
     public MessageHandler getMessageHandler() {

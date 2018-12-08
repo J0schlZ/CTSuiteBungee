@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -12,8 +13,8 @@ import java.util.UUID;
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.messaging.NetworkMessage;
 import de.crafttogether.ctsuite.bungee.messaging.NetworkMessageEvent;
+import de.crafttogether.ctsuite.bungee.messaging.ServerConnectedEvent;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
-import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Listener;
@@ -22,7 +23,7 @@ import net.md_5.bungee.event.EventHandler;
 public class PlayerHandler implements Listener {
 	private CTSuite plugin;
     public HashMap<UUID, String> uuids; // uuid, name
-    public HashMap<UUID, CTPlayer> players; // online players
+    public HashMap<UUID, CTPlayer> players; // all players
 	
 	public PlayerHandler() {
 		this.plugin = CTSuite.getInstance();
@@ -30,6 +31,21 @@ public class PlayerHandler implements Listener {
 		this.players = new HashMap<UUID, CTPlayer>();
 		this.plugin.getProxy().getPluginManager().registerListener(this.plugin, this);
 	}
+	
+	@EventHandler
+    public void onServerConnected(ServerConnectedEvent event) {
+		ArrayList<String> onlinePlayers = new ArrayList<String>();
+		for (Entry<UUID, CTPlayer> entry : this.players.entrySet()) {
+			CTPlayer ctPlayer = entry.getValue();
+			if (ctPlayer.isOnline == false) continue;
+			onlinePlayers.add(ctPlayer.uuid.toString() + ":" + ctPlayer.name + ":" + ctPlayer.server + ":" + ctPlayer.world);
+		}
+		
+		// 'uuid:name:server:world'
+		NetworkMessage nm = new NetworkMessage("update.data.players.list");
+		nm.put("players", onlinePlayers);
+		nm.send(event.getName());
+    }
 	
 	@EventHandler
     public void onNetworkMessage(NetworkMessageEvent ev) {
@@ -53,14 +69,60 @@ public class PlayerHandler implements Listener {
 					(Boolean) ev.getValue("apply")
 				);
 				break;
+				
+			case "player.cmd.gamemode":
+				this.onGamemodeCommand(
+					(String) ev.getValue("targetName"),
+					(String) ev.getValue("senderUUID"),
+					(String) ev.getValue("gamemode"),
+					(Boolean) ev.getValue("apply")
+				);
+				break;
+	            
+            case "player.update.world": 
+                this.onPlayerWorldChange(
+                	UUID.fromString((String) ev.getValue("uuid")),
+                	(String) ev.getValue("world")
+                );
+                break;
+	            
+            case "player.update.flying": 
+                this.onToggledFlight(
+                	UUID.fromString((String) ev.getValue("uuid")),
+                	(Boolean) ev.getValue("flying")
+                );
+                break;
+	            
+            case "player.update.gamemode": 
+                this.onPlayerChangedGamemode(
+                	UUID.fromString((String) ev.getValue("uuid")),
+                	(String) ev.getValue("gamemode")
+                );
+                break;
 		}
     }
 	
+	private void onPlayerChangedGamemode(UUID uuid, String gameMode) {
+		this.players.get(uuid).gameMode = gameMode;
+		this.players.get(uuid).save();
+	}
+
+	private void onToggledFlight(UUID uuid, Boolean isFlying) {
+		this.players.get(uuid).isFlying = isFlying;
+		this.players.get(uuid).save();
+	}
+
+	private void onPlayerWorldChange(UUID uuid, String world) {
+		this.players.get(uuid).world = world;
+		this.players.get(uuid).save();
+	}
+
 	private void onPlayerJoinedServer(UUID uuid, String server, String world, String prefix, String suffix) {
 		this.players.get(uuid).server = server;
 		this.players.get(uuid).world = world;
 		this.players.get(uuid).prefix = prefix;
 		this.players.get(uuid).suffix = suffix;
+		this.players.get(uuid).save();
 	}
 	
 	private void onFlyCommand(String targetName, String senderUUID, String mode, boolean apply) {	
@@ -72,7 +134,7 @@ public class PlayerHandler implements Listener {
 		if (!senderUUID.equalsIgnoreCase("CONSOLE"))
 			ctSender = getPlayer(UUID.fromString(senderUUID));
 
-		if (uuids.containsKey(ctTarget.uuid)) {			
+		if (ctTarget != null) {			
 			if (mode.equalsIgnoreCase("on"))
 				isAllowedFlight = true;
 			else if (mode.equalsIgnoreCase("off"))
@@ -95,19 +157,17 @@ public class PlayerHandler implements Listener {
     		if (!isAllowedFlight)
     			players.get(targetUUID).isFlying = false;
     		
-			if (ctTarget.isOnline) {
-				if (ctTarget.isAllowedFlight != isAllowedFlight) {
-					ProxiedPlayer target = plugin.getProxy().getPlayer(ctTarget.uuid);
-					if (target != null && target.isConnected()) {	
-						HashMap<String, String> placeHolders = new HashMap<String, String>();
-						placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
-						placeHolders.put("player", ctTarget.name);
-						
-						if (isAllowedFlight)
-							plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("fly.enabled", placeHolders));
-						else
-							plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("fly.disabled", placeHolders));
-					}
+			if (ctTarget.isOnline && ctTarget.isAllowedFlight != isAllowedFlight) {
+				ProxiedPlayer target = plugin.getProxy().getPlayer(ctTarget.uuid);
+				if (target != null && target.isConnected()) {	
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
+					placeHolders.put("player", ctTarget.name);
+					
+					if (isAllowedFlight)
+						plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("fly.enabled", placeHolders));
+					else
+						plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("fly.disabled", placeHolders));
 				}
 			}
 			
@@ -159,11 +219,99 @@ public class PlayerHandler implements Listener {
 		else {
 			if (senderUUID != "CONSOLE" && ctSender != null && ctSender.isOnline) {
 				ProxiedPlayer sender = plugin.getProxy().getPlayer(ctSender.uuid);
-				sender.sendMessage(new TextComponent("Es wurde kein Spieler mit dem Namen '" + targetName + "' gefunden"));
+				HashMap<String, String> placeHolders = new HashMap<String, String>();
+				placeHolders.put("target", targetName);
+				placeHolders.put("sender", ctSender.name);
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("player.notfound", placeHolders));
 			}
 		}
 	}
 
+	public void onGamemodeCommand(String targetName, String senderUUID, String gameMode, boolean apply) {
+		UUID targetUUID = getUUID(targetName);
+		CTPlayer ctSender = null;
+		CTPlayer ctTarget = getPlayer(targetUUID);
+		gameMode = gameMode.toUpperCase();
+		
+		if (!senderUUID.equalsIgnoreCase("CONSOLE"))
+			ctSender = getPlayer(UUID.fromString(senderUUID));
+		
+		if (ctTarget != null) {
+			
+			// Send to server
+			if (apply) {
+				NetworkMessage nm = new NetworkMessage("player.set.gamemode");
+	    		nm.put("uuid", targetUUID); 
+	    		nm.put("gamemode", gameMode);
+	    		nm.send(ctTarget.server);
+			}
+			
+			if (ctTarget.isOnline) {
+				ProxiedPlayer target = plugin.getProxy().getPlayer(ctTarget.uuid);
+				if (target != null && target.isConnected()) {
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
+					placeHolders.put("player", ctTarget.name);
+					placeHolders.put("gamemode", gameMode);
+					plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("gamemode.changed", placeHolders));
+				}
+			}
+			
+			if (ctSender != null && ctSender.isOnline && !ctSender.uuid.equals(ctTarget.uuid)) {
+				ProxiedPlayer sender = plugin.getProxy().getPlayer(ctSender.uuid);
+				
+				if (sender != null && sender.isConnected()) {
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
+					placeHolders.put("player", ctTarget.name);
+					placeHolders.put("gamemode", gameMode);
+					plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("gamemode.changed.other", placeHolders));
+				}
+			}
+			
+			players.get(ctTarget.uuid).gameMode = gameMode;
+			final String finalMode = gameMode;
+			
+			plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
+	            public void run() {
+	                PreparedStatement statement = null;
+	                Connection connection = null;
+	                
+	                try {
+	                	String isFlying = ((finalMode.equals("SURVIVAL") || finalMode.equals("ADVENTURE")) ? "flying = 0, fly = 0, " : (finalMode.equals("SPECTATOR") ? "flying = 1," : ""));
+	                	
+	                	connection = plugin.getMySQLConnection();
+	                    statement = connection.prepareStatement("UPDATE " + plugin.getTablePrefix() + "players SET " + isFlying + "gamemode = ? WHERE uuid = ?;");
+	                    statement.setString(1, finalMode);
+	                    statement.setString(2, ctTarget.uuid.toString());
+	        			statement.execute();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+	                
+		           if (statement != null) {
+		               try { statement.close(); }
+		               catch (SQLException e) { e.printStackTrace(); }
+		           }
+		           
+		           if (connection != null) {
+		               try { connection.close(); }
+		               catch (SQLException e) { e.printStackTrace(); }
+		           }
+	            }
+	        });
+		}
+		else {
+			if (senderUUID != "CONSOLE" && ctSender != null && ctSender.isOnline) {
+				ProxiedPlayer sender = plugin.getProxy().getPlayer(ctSender.uuid);
+				HashMap<String, String> placeHolders = new HashMap<String, String>();
+				placeHolders.put("target", targetName);
+				placeHolders.put("sender", ctSender.name);
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("player.notfound", placeHolders));
+			}
+		}
+	}
+	
 	public void firstLogin (UUID uuid, String name) {    	
     	this.plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
             public void run() {
@@ -239,7 +387,7 @@ public class PlayerHandler implements Listener {
                 CTPlayer ctPlayer = getPlayer(uuid);
                 
                 if (ctPlayer == null)
-                	plugin.getLogger().warning("PlayerHandler:237 Spieler nicht gefunden!!");
+                	plugin.getLogger().warning("Spieler nicht gefunden!!");
                 	
                 if (!name.equalsIgnoreCase(ctPlayer.name)) {
                 	// Name Changed
@@ -338,7 +486,6 @@ public class PlayerHandler implements Listener {
 	public void readPlayersFromDB() {
 		plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
 			public void run() {
-
 				System.out.println("Read Players from DB");
 				ResultSet resultSet = null;
 				PreparedStatement statement = null;
@@ -354,6 +501,7 @@ public class PlayerHandler implements Listener {
 				        ctPlayer.updateData(resultSet);
 				        players.put(ctPlayer.uuid, ctPlayer);
 				        uuids.put(ctPlayer.uuid, ctPlayer.name);
+				        System.out.println("DBPlayer " + ctPlayer.name + " - " + ctPlayer.uuid.toString());
 					}
 				} catch (SQLException e) {
 					e.printStackTrace();

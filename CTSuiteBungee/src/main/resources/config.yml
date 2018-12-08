@@ -5,7 +5,33 @@ MySQL:
   prefix: ct_
   user: root
   password:
-CTSuite:
-  Messages:
-    TimeFormat: dd.MM.yyyy HH:mm:ss
-    JoinMessageDelayMS: 150 
+Homes:
+  # Homes groups to define max amount homes player can have. Permission: ctsuite.command.sethome.[groupname]
+  # If players home group if not find then amount will be set to 1
+  # To have unlimited homes use ctsuite.command.sethome.unlimited permission
+  # In adition to this you can use simple numeric permission node ctsuite.command.sethome.[number] which will define max number of homes player can have
+  Groups:
+    Newbie: 2
+    Advanced: 3
+    Vip: 5
+  # Requires ctsuite.bedhome permission node
+  # When set to true by interacting with bed, regular home location will be created
+  # When set to false vanilla bed home location will be set
+  BedInteraction: true
+  # When enabled, plugin will check if player can break block in that area before creating new home location
+  # This allows to prevent setting homes in protected areas
+  # Can be bypassed with ctsuite.command.sethome.bypass
+  CheckBlockBreak: false
+ReSpawn:
+  Enabled: true
+  Global:
+    # Defines respawn order if defined world is not present in Specific list
+    # Possible respawn locations: spawn, bed, home, server, world, warp[warpName]
+    PriorityOrder:
+    - bed
+    - home
+    - spawn
+  Specific:
+    world:
+    - home
+    - world

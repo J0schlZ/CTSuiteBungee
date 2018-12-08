@@ -5,6 +5,13 @@ join.newplayer.announcement: '&eHerzlich Willkommen auf Craft-Togerher.de, &3{pl
 leave.broadcast: '&e{player} hat das Spiel verlassen'
 
 fly.enabled: '&eDu kannst jetzt fliegen'
-fly.enabled.other: '&6Du hast den Flugmodus für {targetDisplayName} &2aktiviert'
+fly.enabled.other: '&6Du hast den Flugmodus für &e{player} &2aktiviert'
 fly.disabled: '&eKomm mal wieder auf den Boden'
-fly.disabled.other: '&6Du hast den Flugmodus für {targetDisplayName} &edeaktiviert'
+fly.disabled.other: '&6Du hast den Flugmodus für &e{player} &cdeaktiviert'
+
+gamemode.changed: '&6Du befindest dich nun im GameMode: &e{gamemode}'
+gamemode.changed.other: '&6Du hast &e{player} &6in den GameMode &e{gamemode} &6gesetzt'
+
+player.notfound: '&cEs wurde kein Spieler mit dem Namen &e{player} gefunden'
+permission.denied: '&cDazu hast du keine Berechtigung.'
+permission.denied.hover: '{permission}'

@@ -53,13 +53,15 @@ public class MessageHandler implements Listener {
 	
 	public void readMessages() {
 		BufferedReader read = null;
+		InputStreamReader isr = null;
         this.messages = new HashMap<String, String>();
         
-        File f = new File(plugin.getDataFolder(), "messages.yml");
+        File file = new File(plugin.getDataFolder(), "messages.yml");
         try {
-            read = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF8"));
+        	isr = new InputStreamReader(new FileInputStream(file), "UTF8");
+            read = new BufferedReader(isr);
             String line;
-            while ((line = read.readLine().toString()) != null) {
+            while ((line = read.readLine()) != null) {
                 line = line.trim();
                 if (!line.equals("") && !line.startsWith("#")) {
                     String[] split = line.split(": ");
@@ -68,7 +70,6 @@ public class MessageHandler implements Listener {
                         msg += split[i] + ": ";
                     msg = msg.substring(1, msg.length() - 3);
                     messages.put(split[0], msg);
-                    System.out.println(split[0] + " -> " + msg);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -77,12 +78,17 @@ public class MessageHandler implements Listener {
             e.printStackTrace();
         } finally {
 			try {
-				read.close();
+				if (isr != null)
+					isr.close();
+				if (read != null)
+					read.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
         }
     }
+	
+
 
 	//
     public void send(UUID uuid, TextComponent message) {
@@ -135,7 +141,7 @@ public class MessageHandler implements Listener {
         broadcast(text);
     }
 
-    // ##
+    //
     public TextComponent getMessage(String identifier, HashMap<String, String> placeHolders) {
     	String message = messages.get(identifier).toString();
     	

@@ -102,6 +102,7 @@ public class PlayerLoginListener implements Listener {
 
         	NetworkMessage nm = new NetworkMessage("player.update.joined.network");
         	nm.put("uuid", ev.getConnection().getUniqueId());
+        	nm.put("name", ev.getConnection().getName());
         	nm.send("all");
         }
         

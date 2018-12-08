@@ -2,3 +2,4 @@ name: CTSuite
 main: de.crafttogether.ctsuite.bungee.CTSuite
 version: 1.0.0
 author: J0schlZ
+softdepend: [Sockets4MC, Kotlin4MC]
