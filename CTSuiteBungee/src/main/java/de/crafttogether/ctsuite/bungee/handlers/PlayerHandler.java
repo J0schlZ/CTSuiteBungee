@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
@@ -16,6 +17,8 @@ import de.crafttogether.ctsuite.bungee.messaging.NetworkMessageEvent;
 import de.crafttogether.ctsuite.bungee.messaging.ServerConnectedEvent;
 import de.crafttogether.ctsuite.bungee.util.CTLocation;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
+import de.crafttogether.ctsuite.bungee.util.LocationRequest;
+import de.crafttogether.ctsuite.bungee.util.LocationResponse;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Listener;
@@ -24,12 +27,12 @@ import net.md_5.bungee.event.EventHandler;
 public class PlayerHandler implements Listener {
 	private CTSuite plugin;
     public HashMap<UUID, String> uuids; // uuid, name
-    public HashMap<UUID, CTPlayer> players; // all players
+    public ConcurrentHashMap<UUID, CTPlayer> players; // all players
 	
 	public PlayerHandler() {
 		this.plugin = CTSuite.getInstance();
 		this.uuids = new HashMap<UUID, String>();
-		this.players = new HashMap<UUID, CTPlayer>();
+		this.players = new ConcurrentHashMap<UUID, CTPlayer>();
 		this.plugin.getProxy().getPluginManager().registerListener(this.plugin, this);
 	}
 	
@@ -128,9 +131,10 @@ public class PlayerHandler implements Listener {
 				break;
                 
 			case "player.teleport.player":
-				this.plugin.getTeleportHandler().toPlayer(
-					UUID.fromString((String) ev.getValue("uuid")),
-					UUID.fromString((String) ev.getValue("target"))
+				this.onPlayerTeleportPlayer(
+					(String) ev.getValue("senderUUID"),
+					(String) ev.getValue("playerName"),
+					(String) ev.getValue("targetName")
 				);
 				break;
                 
@@ -368,30 +372,102 @@ public class PlayerHandler implements Listener {
 		}
 	}
 	
-
 	public void onPlayerTeleportLocation(UUID uuid, CTLocation loc) {
-		ProxiedPlayer sender = plugin.getProxy().getPlayer(uuid);
+		ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
 		HashMap<String, String> placeHolders = new HashMap<String, String>();
 		
-		plugin.getTeleportHandler().toLocation(uuid, loc);
-		
-		if (sender != null && sender.isConnected()) {
+		if (player != null && player.isConnected()) {
 			if (plugin.getWorldHandler().findServer(loc.getServer()) == null) {
-				placeHolders.put("sender", sender.getName());
+				placeHolders.put("sender", player.getName());
 				placeHolders.put("server", loc.getServer());
-				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.server", placeHolders));
+				plugin.getMessageHandler().send(player, plugin.getMessageHandler().getMessage("notfound.server", placeHolders));
 				return;
 			}
 			
 			if (plugin.getWorldHandler().findWorld(loc.getWorld()) == null) {
-				placeHolders.put("sender", sender.getName());
+				placeHolders.put("sender", player.getName());
 				placeHolders.put("world", loc.getWorld());
-				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.world", placeHolders));
+				plugin.getMessageHandler().send(player, plugin.getMessageHandler().getMessage("notfound.world", placeHolders));
 				return;
 			}
+			
+			plugin.getTeleportHandler().toLocation(uuid, loc);
+			plugin.getMessageHandler().send(player.getUniqueId(), plugin.getMessageHandler().getMessage("teleport.location", placeHolders));
 		}
 	}
 	
+	public void onPlayerTeleportPlayer(String senderUUID, String playerName, String targetName) {
+		CTPlayer ctPlayer = getPlayer(playerName);
+		CTPlayer ctTarget = getPlayer(targetName);
+		CTPlayer ctSender = getPlayer(senderUUID);
+
+		if (ctPlayer == null || ctTarget == null)
+			return;
+		
+		HashMap<String, String> placeHolders = new HashMap<String, String>();
+		placeHolders.put("sender", (ctSender != null) ? ctSender.name : senderUUID);
+		placeHolders.put("player", ctPlayer.name);
+		placeHolders.put("target", ctTarget.name);
+		
+		// Player to Player
+		if (ctPlayer.isOnline && ctPlayer.isOnline) {
+			plugin.getTeleportHandler().toPlayer(ctPlayer.uuid, ctTarget.uuid);
+			
+			if (ctSender != null && ctSender.isOnline) {				
+				if (ctPlayer.uuid.equals(ctSender.uuid))
+					plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player", placeHolders));
+				else
+					plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player.other", placeHolders));
+			}
+			
+			// you're been teleportet to...
+		}
+		
+		// Player to players last location
+		else if (!ctTarget.isOnline) {
+			plugin.getTeleportHandler().toLocation(ctPlayer.uuid, ctTarget.logoutLocation);
+			
+			if (ctSender != null && ctSender.isOnline) {				
+				if (ctPlayer.uuid.equals(ctSender.uuid))
+					plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player.offline", placeHolders));
+				else
+					plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player.offline.other", placeHolders));
+			}
+		}
+		
+		// Set spawn to players location
+		else if (!ctPlayer.isOnline) {
+			new LocationRequest(UUID.fromString(senderUUID), new LocationResponse() {
+				@Override
+				public void run() { // Async context
+					CTLocation loc = this.getLocation();
+					placeHolders.put("location", loc.getServer() + ", " + loc.getWorld() + ", " + loc.getX() + ", " + loc.getY() + ", " + loc.getZ());
+					plugin.getPlayerHandler().setLoginLocation(ctPlayer.uuid, loc);
+					
+					if (ctSender != null && ctSender.isOnline)
+						plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player.setspawn", placeHolders));
+				}
+			});
+		}
+		
+		// Set spawn to players last location
+		else {
+			CTLocation loc = ctTarget.logoutLocation;
+			placeHolders.put("location", loc.getServer() + ", " + loc.getWorld() + ", " + loc.getX() + ", " + loc.getY() + ", " + loc.getZ());
+			
+			plugin.getPlayerHandler().setLoginLocation(ctPlayer.uuid, ctTarget.logoutLocation);
+			
+			if (ctSender != null && ctSender.isOnline)
+				plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player.setspawn", placeHolders));
+		}
+	}
+
+	protected void setLoginLocation(UUID uuid, CTLocation location) {
+		if (!this.players.containsKey(uuid)) return;
+		this.players.get(uuid).loginLocation = location;
+		this.players.get(uuid).save();
+	}
+
 	public void firstLogin (UUID uuid, String name) {    	
     	this.plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
             public void run() {

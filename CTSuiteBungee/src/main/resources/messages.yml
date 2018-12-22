@@ -1,20 +1,43 @@
-join.banned: '&cDu wurdest gebannt. Grund:\n&6{reason}'
-join.banneduntil: '&cDu wurdest für &6{expiration} &cgebannt. Grund:\n&6{reason}'
-join.broadcast: '&e{player} hat das Spiel betreten'
-join.newplayer.announcement: '&eHerzlich Willkommen auf Craft-Togerher.de, &3{player}&e!'
-leave.broadcast: '&e{player} hat das Spiel verlassen'
+join:
+  banned:
+    temp: '&cDu wurdest für &6{expiration} &cgebannt. Grund:\n&6{reason}'
+    forever: '&cDu wurdest gebannt. Grund:\n&6{reason}'
+  broadcast:
+    joined: '&e{player} hat das Spiel betreten'
+    leaved: '&e{player} hat das Spiel verlassen'
+    firstjoin: '&eHerzlich Willkommen auf Craft-Togerher.de, &3{player}&e!'
 
-fly.enabled: '&eDu kannst jetzt fliegen'
-fly.enabled.other: '&6Du hast den Flugmodus für &e{player} &2aktiviert'
-fly.disabled: '&eKomm mal wieder auf den Boden'
-fly.disabled.other: '&6Du hast den Flugmodus für &e{player} &cdeaktiviert'
+server:
+  connfailed: '&cEs es konnte keine Verbindung zum Server &e{server} &chergestellt werden.'
 
-gamemode.changed: '&6Du befindest dich nun im GameMode: &e{gamemode}'
-gamemode.changed.other: '&6Du hast &e{player} &6in den GameMode &e{gamemode} &6gesetzt'
+command:
+  noperm:
+    feedback: '&cDazu hast du keine Berechtigung.'
+    hover: '{permission}'
 
-notfound.player: '&cEs wurde kein Spieler mit dem Namen &e{player} &cgefunden'
-notfound.world: '&cEs gibt keinen Server mit dem Namen &e{world} &cgefunden'
-notfound.server: '&cEs gibt keinen Server mit dem Namen &e{server} &cgefunden'
+  fly:
+    feedback:
+      enabled: '&6Du hast den Flugmodus für &e{player} &2aktiviert'
+      disabled: '&6Du hast den Flugmodus für &e{player} &cdeaktiviert'
+    targetfeedback:
+      enabled: '&eFlieg mein kleiner Schmetterling'
+      disabled: '&eKomm mal wieder auf den Boden'
+      
+  gamemode:
+    feedback: '&6Du hast &e{player} &6in den GameMode &e{gamemode} &6gesetzt'
+    targetfeedback: '&6Du befindest dich nun im GameMode: &e{gamemode}'
+  
+  tppos:
+    feedback: '&Du wurdest nach &e{location} &6teleportiert'
 
-permission.denied: '&cDazu hast du keine Berechtigung.'
-permission.denied.hover: '{permission}'
+  tp:
+    feedback:
+      online: '&6Du hast &e{player} &6zu &e{target} teleportiert.'
+      offline: '&6Du hast &e{player} &6zu &e{target} &7(offline) &6teleportiert.'
+      setspawn: '&6Du hast den Spawnpunkt für den nächsten Login von &e{player} &6auf {location} gesetzt'
+    targetFeedback:
+      online: '&6Du wurdest &6zu &e{target} teleportiert.'
+      offline: '&6Du wurdest &6zu &e{target} &7(offline) &6teleportiert.'
+
+  tphere:
+    feedback:

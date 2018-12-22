@@ -39,7 +39,7 @@ public class WorldHandler implements Listener {
 	@SuppressWarnings("unchecked")
     public void onNetworkMessage(NetworkMessageEvent ev) {
 		switch(ev.getMessageKey()) {
-			case "update.data.world.list":
+			case "data.update.world.list":
 				ArrayList<String> worlds = (ArrayList<String>) ev.getValues().get("worlds");
 				for (String world : worlds) {
 					String[] worldData = world.split(":");
@@ -47,11 +47,11 @@ public class WorldHandler implements Listener {
 				}
 				break;
 				
-			case "update.data.world.loaded":
+			case "data.update.world.loaded":
 				this.worlds.put((String) ev.getValues().get("world"), ev.getSender());
 				break;
 				
-			case "update.data.world.unloaded":
+			case "data.update.world.unloaded":
 				this.worlds.remove((String) ev.getValues().get("world"), ev.getSender());
 				break;
 		}

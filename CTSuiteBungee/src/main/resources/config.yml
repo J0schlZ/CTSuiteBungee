@@ -32,6 +32,9 @@ ReSpawn:
     - home
     - spawn
   Specific:
-    world:
+    myAwesomeworld:
+    - home
+    - world
+    myAwesomeServer:
     - home
     - world

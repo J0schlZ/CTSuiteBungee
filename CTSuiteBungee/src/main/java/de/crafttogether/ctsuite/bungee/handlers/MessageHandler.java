@@ -89,12 +89,11 @@ public class MessageHandler implements Listener {
     }
 	
 
-
 	//
     public void send(UUID uuid, TextComponent message) {
     	ProxiedPlayer p = plugin.getProxy().getPlayer(uuid);
     	
-    	if (p != null)
+    	if (p != null && p.isConnected())
     		p.sendMessage(message);
     }
     
@@ -102,7 +101,7 @@ public class MessageHandler implements Listener {
     public void send(UUID uuid, String message) {
     	ProxiedPlayer p = plugin.getProxy().getPlayer(uuid);
     	
-    	if (p != null)
+    	if (p != null && p.isConnected())
     		p.sendMessage(translateColorCodes(message));
     }
     

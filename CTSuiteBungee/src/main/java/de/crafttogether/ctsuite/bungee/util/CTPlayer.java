@@ -14,6 +14,7 @@ public class CTPlayer {
 	public String nickname = null;
 	public String server = null;
 	public String world = null;
+	public CTLocation loginLocation = null;
 	public CTLocation logoutLocation = null;
 	public Boolean isOnline = null;
 	public String gameMode = null;
@@ -38,6 +39,7 @@ public class CTPlayer {
 	    	this.nickname = rs.getString("nickname");
 	    	this.server = rs.getString("server");
 	    	this.world = rs.getString("world");
+	    	this.loginLocation = (rs.getString("login_location") != null ? CTLocation.fromString(rs.getString("login_location")) : null);
 	    	this.logoutLocation = (rs.getString("logout_location") != null ? CTLocation.fromString(rs.getString("logout_location")) : null);
 	    	this.isOnline = (rs.getInt("online") == 1) ? true : false;
 	    	this.gameMode = rs.getString("gamemode");
@@ -70,6 +72,7 @@ public class CTPlayer {
                     	+ "nickname = ?,"
                     	+ "server = ?,"
                     	+ "world = ?,"
+                    	+ "login_location = ?,"
                     	+ "logout_location = ?,"
                     	+ "online = ?,"
                     	+ "gamemode = ?,"
@@ -85,17 +88,18 @@ public class CTPlayer {
                     statement.setString(2, player.nickname);
                     statement.setString(3, player.server);
                     statement.setString(4, player.world);
-                    statement.setString(5, player.logoutLocation == null ? null : player.logoutLocation.toString());
-                    statement.setInt(6, player.isOnline ? 1: 0);
-                    statement.setString(7, player.gameMode);
-                    statement.setInt(8, player.isAllowedFlight ? 1 : 0);
-                    statement.setInt(9, player.isFlying ? 1 : 0);
-                    statement.setInt(10, player.isVanished ? 1 : 0);
-                    statement.setInt(11, player.firstJoin);
-                    statement.setInt(12, player.lastJoin);
-                    statement.setInt(13, player.lastLeave);
-                    statement.setInt(14, player.playtime);
-                    statement.setString(15, player.uuid.toString());
+                    statement.setString(5, player.loginLocation == null ? null : player.loginLocation.toString());
+                    statement.setString(6, player.logoutLocation == null ? null : player.logoutLocation.toString());
+                    statement.setInt(7, player.isOnline ? 1: 0);
+                    statement.setString(8, player.gameMode);
+                    statement.setInt(9, player.isAllowedFlight ? 1 : 0);
+                    statement.setInt(10, player.isFlying ? 1 : 0);
+                    statement.setInt(11, player.isVanished ? 1 : 0);
+                    statement.setInt(12, player.firstJoin);
+                    statement.setInt(13, player.lastJoin);
+                    statement.setInt(14, player.lastLeave);
+                    statement.setInt(15, player.playtime);
+                    statement.setString(16, player.uuid.toString());
         			statement.execute();
                 } catch (SQLException e) {
                     e.printStackTrace();

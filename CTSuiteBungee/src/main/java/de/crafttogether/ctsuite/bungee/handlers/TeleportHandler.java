@@ -1,11 +1,13 @@
 package de.crafttogether.ctsuite.bungee.handlers;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
 import de.crafttogether.ctsuite.bungee.messaging.NetworkMessage;
 import de.crafttogether.ctsuite.bungee.util.CTLocation;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Listener;
 
@@ -17,32 +19,72 @@ public class TeleportHandler implements Listener {
 		this.plugin.getProxy().getPluginManager().registerListener(this.plugin, this);
 	}
 	
-	public void toLocation(UUID uuid, CTLocation loc) {
-		ProxiedPlayer p = plugin.getProxy().getPlayer(uuid);
+	public void toLocation(UUID uuid, CTLocation ctLoc) {
 		CTPlayer ctPlayer = plugin.getPlayerHandler().getPlayer(uuid);
 		
-		String server = plugin.getWorldHandler().findServer(loc.getWorld());
-		String world = plugin.getWorldHandler().findWorld(loc.getServer());
+		String serverName = plugin.getWorldHandler().findServer(ctLoc.getServer());
+		String worldName = plugin.getWorldHandler().findWorld(ctLoc.getWorld());
 		
-		if (p == null || ctPlayer == null || server == null || world == null)
+		if (ctPlayer == null || serverName == null || worldName == null)
 			return;
 		
-		loc.setServer(server);
-		loc.setWorld(world);
+		ctLoc.setServer(serverName);
+		ctLoc.setWorld(worldName);
 		
 		// Send pending teleport to target server
-		NetworkMessage nm = new NetworkMessage("player.set.tppos");
+		NetworkMessage nm = new NetworkMessage("player.teleport.location");
 		nm.put("uuid", uuid);
-		nm.put("location", loc.toString());
-    	nm.send(server);
+		nm.put("location", ctLoc.toString());
+    	nm.send(serverName);
 		
 		// Connect player to target server
-		if (!server.equalsIgnoreCase(ctPlayer.server))
-			p.connect(plugin.getProxy().getServerInfo(server));
+		if (!serverName.equalsIgnoreCase(ctPlayer.server)) {
+			ProxiedPlayer p = plugin.getProxy().getPlayer(uuid);
+			if (p != null) {
+				ServerInfo server = plugin.getProxy().getServerInfo(serverName);
+				
+	        	if (server != null)
+	        		p.connect(server);
+	        	else {
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("player", ctPlayer.name);
+					placeHolders.put("server", serverName);
+					plugin.getMessageHandler().send(p, plugin.getMessageHandler().getMessage("connection.failed", placeHolders));
+	        	}
+			}
+		}
 	}
 	
 	public void toPlayer(UUID playerUUID, UUID targetUUID) {
+		CTPlayer ctPlayer = plugin.getPlayerHandler().getPlayer(playerUUID);
+		CTPlayer ctTarget = plugin.getPlayerHandler().getPlayer(targetUUID);
+
+		if (ctPlayer == null || ctTarget == null || !ctTarget.isOnline)
+			return;
 		
+		// Send pending teleport to target server
+		NetworkMessage nm = new NetworkMessage("player.teleport.player");
+		nm.put("playerUUID", playerUUID);
+		nm.put("targetUUID", targetUUID);
+    	nm.send(ctPlayer.server);
+		
+		// Connect player to target server
+		if (!ctPlayer.server.equalsIgnoreCase(ctTarget.server)) {
+			ProxiedPlayer p = plugin.getProxy().getPlayer(playerUUID);
+			
+			if (p != null) {
+				ServerInfo server = plugin.getProxy().getServerInfo(ctPlayer.server);
+				
+	        	if (server != null)
+	        		p.connect(server);
+	        	else {
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("player", ctPlayer.name);
+					placeHolders.put("server", ctPlayer.server);
+					plugin.getMessageHandler().send(p, plugin.getMessageHandler().getMessage("connection.failed", placeHolders));
+	        	}
+			}
+		}
 	}
 	
 	public void toSpawn(UUID uuid, String spawn) {
@@ -57,13 +99,5 @@ public class TeleportHandler implements Listener {
 		if (spawn.startsWith("world:")) {
 			
 		}
-	}
-	
-	public void location2String() {
-		
-	}
-	
-	public void String2Location() {
-		
 	}
 }
