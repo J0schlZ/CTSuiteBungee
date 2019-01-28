@@ -21,7 +21,6 @@ import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
 import de.crafttogether.ctsuite.bungee.handlers.TeleportHandler;
 import de.crafttogether.ctsuite.bungee.handlers.WorldHandler;
 import de.crafttogether.ctsuite.bungee.messaging.adapter.Sockets4MC;
-import de.crafttogether.ctsuite.bungee.util.CTLocation;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
