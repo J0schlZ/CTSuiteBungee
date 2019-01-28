@@ -30,6 +30,7 @@ import net.md_5.bungee.config.YamlConfiguration;
 public class CTSuite extends Plugin {
     private static CTSuite plugin;
     private Configuration config;
+    private Configuration messages;
     private HikariDataSource hikari;
     
     private String tablePrefix;
@@ -71,6 +72,7 @@ public class CTSuite extends Plugin {
         }
         try {
         	this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(new FileInputStream(configFile), "UTF8"));
+        	this.messages = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new InputStreamReader(new FileInputStream(messagesFile), "UTF8"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,8 +100,7 @@ public class CTSuite extends Plugin {
 
     	this.getProxy().getPluginManager().registerListener(this, new PlayerLoginListener());
     	this.getProxy().getPluginManager().registerListener(this, new PlayerLeaveListener());
-        
-    	this.messageHandler.readMessages();
+
     	this.playerHandler.readPlayersFromDB();
     }
     
@@ -165,6 +166,14 @@ public class CTSuite extends Plugin {
 
 	public String getMessagingService() {
 		return this.messagingService;
+	}
+
+	public Configuration getMessages() {
+		return this.messages;
+	}
+
+	public Configuration getConfig() {
+		return this.config;
 	}
     
     public static CTSuite getInstance() {

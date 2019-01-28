@@ -49,7 +49,7 @@ public class TeleportHandler implements Listener {
 					HashMap<String, String> placeHolders = new HashMap<String, String>();
 					placeHolders.put("player", ctPlayer.name);
 					placeHolders.put("server", serverName);
-					plugin.getMessageHandler().send(p, plugin.getMessageHandler().getMessage("connection.failed", placeHolders));
+					plugin.getMessageHandler().send(p, plugin.getMessageHandler().getMessage("info.connFailed", placeHolders));
 	        	}
 			}
 		}
@@ -81,7 +81,7 @@ public class TeleportHandler implements Listener {
 					HashMap<String, String> placeHolders = new HashMap<String, String>();
 					placeHolders.put("player", ctPlayer.name);
 					placeHolders.put("server", ctPlayer.server);
-					plugin.getMessageHandler().send(p, plugin.getMessageHandler().getMessage("connection.failed", placeHolders));
+					plugin.getMessageHandler().send(p, plugin.getMessageHandler().getMessage("info.connFailed", placeHolders));
 	        	}
 			}
 		}

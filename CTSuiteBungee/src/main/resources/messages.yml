@@ -2,42 +2,44 @@ join:
   banned:
     temp: '&cDu wurdest für &6{expiration} &cgebannt. Grund:\n&6{reason}'
     forever: '&cDu wurdest gebannt. Grund:\n&6{reason}'
+    
   broadcast:
     joined: '&e{player} hat das Spiel betreten'
     leaved: '&e{player} hat das Spiel verlassen'
     firstjoin: '&eHerzlich Willkommen auf Craft-Togerher.de, &3{player}&e!'
 
-server:
-  connfailed: '&cEs es konnte keine Verbindung zum Server &e{server} &chergestellt werden.'
+info:
+  noPermission: '&cDazu hast du keine Berechtigung'
+  noPermissionHover: '{permission}'
+  noPlayer: '&cEs konnte kein Spieler mit dem Namen &e{player} &cgefunden werden'
+  noWorld: '&cEs konnte keine Welt mit dem Namen &e{world} &cgefunden werden'
+  noServer: '&cEs konnte kein Server mit dem Namen &e{server} &cgefunden werden'
+  connFailed: '&cEs es konnte keine Verbindung zum Server &e{server} &chergestellt werden'
 
 command:
-  noperm:
-    feedback: '&cDazu hast du keine Berechtigung.'
-    hover: '{permission}'
-
   fly:
     feedback:
       enabled: '&6Du hast den Flugmodus für &e{player} &2aktiviert'
       disabled: '&6Du hast den Flugmodus für &e{player} &cdeaktiviert'
-    targetfeedback:
+    targetFeedback:
       enabled: '&eFlieg mein kleiner Schmetterling'
       disabled: '&eKomm mal wieder auf den Boden'
       
   gamemode:
     feedback: '&6Du hast &e{player} &6in den GameMode &e{gamemode} &6gesetzt'
-    targetfeedback: '&6Du befindest dich nun im GameMode: &e{gamemode}'
+    targetFeedback: '&6Du befindest dich nun im GameMode: &e{gamemode}'
   
   tppos:
     feedback: '&Du wurdest nach &e{location} &6teleportiert'
 
   tp:
     feedback:
-      online: '&6Du hast &e{player} &6zu &e{target} teleportiert.'
-      offline: '&6Du hast &e{player} &6zu &e{target} &7(offline) &6teleportiert.'
-      setspawn: '&6Du hast den Spawnpunkt für den nächsten Login von &e{player} &6auf {location} gesetzt'
+      online: '&6Du hast &e{player} &6zu &e{target} teleportiert'
+      offline: '&6Du hast &e{player} &6zu &e{target} &7(offline) &6teleportiert'
+      setSpawn: '&6Du hast den Spawnpunkt für den nächsten Login von &e{player} &6auf {location} gesetzt'
     targetFeedback:
-      online: '&6Du wurdest &6zu &e{target} teleportiert.'
-      offline: '&6Du wurdest &6zu &e{target} &7(offline) &6teleportiert.'
+      online: '&6Du wurdest &6zu &e{target} teleportiert'
+      offline: '&6Du wurdest &6zu &e{target} &7(offline) &6teleportiert'
 
   tphere:
     feedback:

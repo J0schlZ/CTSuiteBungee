@@ -36,7 +36,7 @@ public class PlayerPostLoginListener implements Listener {
 				HashMap<String, String> placeHolders = new HashMap<String, String>();
 				placeHolders.put("player", ctPlayer.name);
 				placeHolders.put("server", ctPlayer.server);
-				plugin.getMessageHandler().send(ev.getPlayer(), plugin.getMessageHandler().getMessage("connection.failed", placeHolders));
+				plugin.getMessageHandler().send(ev.getPlayer(), plugin.getMessageHandler().getMessage("info.connFailed", placeHolders));
         	}
         }
     }

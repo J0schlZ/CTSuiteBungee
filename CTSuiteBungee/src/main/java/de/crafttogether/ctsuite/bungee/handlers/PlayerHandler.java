@@ -19,6 +19,7 @@ import de.crafttogether.ctsuite.bungee.util.CTLocation;
 import de.crafttogether.ctsuite.bungee.util.CTPlayer;
 import de.crafttogether.ctsuite.bungee.util.LocationRequest;
 import de.crafttogether.ctsuite.bungee.util.LocationResponse;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Listener;
@@ -216,6 +217,20 @@ public class PlayerHandler implements Listener {
 	    	
     		if (!isAllowedFlight)
     			players.get(targetUUID).isFlying = false;
+
+			if (ctSender != null && ctSender.isOnline && !ctSender.uuid.equals(ctTarget.uuid)) {			
+				ProxiedPlayer sender = plugin.getProxy().getPlayer(ctSender.uuid);
+				if (sender != null && sender.isConnected()) {
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("sender", ctSender.name);
+					placeHolders.put("player", ctTarget.name);
+					
+					if (isAllowedFlight)
+						plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("command.fly.feedback.enabled", placeHolders));
+					else
+						plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("command.fly.feedback.disabled", placeHolders));
+				}
+			}
     		
 			if (ctTarget.isOnline && ctTarget.isAllowedFlight != isAllowedFlight) {
 				ProxiedPlayer target = plugin.getProxy().getPlayer(ctTarget.uuid);
@@ -225,23 +240,9 @@ public class PlayerHandler implements Listener {
 					placeHolders.put("player", ctTarget.name);
 					
 					if (isAllowedFlight)
-						plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("fly.enabled", placeHolders));
+						plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("command.fly.targetFeedback.enabled", placeHolders));
 					else
-						plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("fly.disabled", placeHolders));
-				}
-			}
-			
-			if (ctSender != null && ctSender.isOnline && !ctSender.uuid.equals(ctTarget.uuid)) {			
-				ProxiedPlayer sender = plugin.getProxy().getPlayer(ctSender.uuid);
-				if (sender != null && sender.isConnected()) {
-					HashMap<String, String> placeHolders = new HashMap<String, String>();
-					placeHolders.put("sender", ctSender.name);
-					placeHolders.put("player", ctTarget.name);
-					
-					if (isAllowedFlight)
-						plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("fly.enabled.other", placeHolders));
-					else
-						plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("fly.disabled.other", placeHolders));
+						plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("command.fly.targetFeedback.disabled", placeHolders));
 				}
 			}
 			
@@ -282,7 +283,7 @@ public class PlayerHandler implements Listener {
 				HashMap<String, String> placeHolders = new HashMap<String, String>();
 				placeHolders.put("target", targetName);
 				placeHolders.put("sender", ctSender.name);
-				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.player", placeHolders));
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("info.noPlayer", placeHolders));
 			}
 		}
 	}
@@ -306,17 +307,6 @@ public class PlayerHandler implements Listener {
 	    		nm.send(ctTarget.server);
 			}
 			
-			if (ctTarget.isOnline) {
-				ProxiedPlayer target = plugin.getProxy().getPlayer(ctTarget.uuid);
-				if (target != null && target.isConnected()) {
-					HashMap<String, String> placeHolders = new HashMap<String, String>();
-					placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
-					placeHolders.put("player", ctTarget.name);
-					placeHolders.put("gamemode", gameMode);
-					plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("gamemode.changed", placeHolders));
-				}
-			}
-			
 			if (ctSender != null && ctSender.isOnline && !ctSender.uuid.equals(ctTarget.uuid)) {
 				ProxiedPlayer sender = plugin.getProxy().getPlayer(ctSender.uuid);
 				
@@ -325,7 +315,18 @@ public class PlayerHandler implements Listener {
 					placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
 					placeHolders.put("player", ctTarget.name);
 					placeHolders.put("gamemode", gameMode);
-					plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("gamemode.changed.other", placeHolders));
+					plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("command.gamemode.feedback", placeHolders));
+				}
+			}
+			
+			if (ctTarget.isOnline) {
+				ProxiedPlayer target = plugin.getProxy().getPlayer(ctTarget.uuid);
+				if (target != null && target.isConnected()) {
+					HashMap<String, String> placeHolders = new HashMap<String, String>();
+					placeHolders.put("sender", ctSender != null ? ctSender.name : "CONSOLE");
+					placeHolders.put("player", ctTarget.name);
+					placeHolders.put("gamemode", gameMode);
+					plugin.getMessageHandler().send(target, plugin.getMessageHandler().getMessage("command.gamemode.targetFeedback", placeHolders));
 				}
 			}
 			
@@ -367,7 +368,7 @@ public class PlayerHandler implements Listener {
 				HashMap<String, String> placeHolders = new HashMap<String, String>();
 				placeHolders.put("target", targetName);
 				placeHolders.put("sender", ctSender.name);
-				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("notfound.player", placeHolders));
+				plugin.getMessageHandler().send(sender, plugin.getMessageHandler().getMessage("info.noPlayer", placeHolders));
 			}
 		}
 	}
@@ -380,14 +381,14 @@ public class PlayerHandler implements Listener {
 			if (plugin.getWorldHandler().findServer(loc.getServer()) == null) {
 				placeHolders.put("sender", player.getName());
 				placeHolders.put("server", loc.getServer());
-				plugin.getMessageHandler().send(player, plugin.getMessageHandler().getMessage("notfound.server", placeHolders));
+				plugin.getMessageHandler().send(player, plugin.getMessageHandler().getMessage("info.noServer", placeHolders));
 				return;
 			}
 			
 			if (plugin.getWorldHandler().findWorld(loc.getWorld()) == null) {
 				placeHolders.put("sender", player.getName());
 				placeHolders.put("world", loc.getWorld());
-				plugin.getMessageHandler().send(player, plugin.getMessageHandler().getMessage("notfound.world", placeHolders));
+				plugin.getMessageHandler().send(player, plugin.getMessageHandler().getMessage("info.noWorld", placeHolders));
 				return;
 			}
 			
@@ -397,14 +398,23 @@ public class PlayerHandler implements Listener {
 	}
 	
 	public void onPlayerTeleportPlayer(String senderUUID, String playerName, String targetName) {
+		HashMap<String, String> placeHolders = new HashMap<String, String>();
 		CTPlayer ctPlayer = getPlayer(playerName);
 		CTPlayer ctTarget = getPlayer(targetName);
 		CTPlayer ctSender = getPlayer(senderUUID);
 
-		if (ctPlayer == null || ctTarget == null)
+		if (ctPlayer == null) {
+			placeHolders.put("player", playerName);
+			plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("info.noPlayer", placeHolders));
 			return;
+		}
 		
-		HashMap<String, String> placeHolders = new HashMap<String, String>();
+		if (ctTarget == null) {
+			placeHolders.put("target", targetName);
+			plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("info.noPlayer", placeHolders));
+			return;
+		}
+		
 		placeHolders.put("sender", (ctSender != null) ? ctSender.name : senderUUID);
 		placeHolders.put("player", ctPlayer.name);
 		placeHolders.put("target", ctTarget.name);
@@ -419,8 +429,6 @@ public class PlayerHandler implements Listener {
 				else
 					plugin.getMessageHandler().send(ctSender.uuid, plugin.getMessageHandler().getMessage("teleport.player.other", placeHolders));
 			}
-			
-			// you're been teleportet to...
 		}
 		
 		// Player to players last location
@@ -454,7 +462,6 @@ public class PlayerHandler implements Listener {
 		else {
 			CTLocation loc = ctTarget.logoutLocation;
 			placeHolders.put("location", loc.getServer() + ", " + loc.getWorld() + ", " + loc.getX() + ", " + loc.getY() + ", " + loc.getZ());
-			
 			plugin.getPlayerHandler().setLoginLocation(ctPlayer.uuid, ctTarget.logoutLocation);
 			
 			if (ctSender != null && ctSender.isOnline)
@@ -542,19 +549,22 @@ public class PlayerHandler implements Listener {
             else {
                 CTPlayer ctPlayer = getPlayer(uuid);
                 
-                if (ctPlayer == null)
+                if (ctPlayer == null) {
                 	plugin.getLogger().warning("Spieler nicht gefunden!!");
-                	
-                if (!name.equalsIgnoreCase(ctPlayer.name)) {
-                	// Name Changed
+                	plugin.getMessageHandler().send(uuid, ChatColor.translateAlternateColorCodes('&', "&c[CTSuiteBungee]: Spieler nicht gefunden!!"));
                 }
-                
-                ctPlayer.name = name;
-                ctPlayer.isOnline = true;
-                ctPlayer.lastJoin = (int) (System.currentTimeMillis() / 1000L);
-       
-                this.players.put(uuid, ctPlayer);
-                this.uuids.put(uuid, name);
+                else {
+	                if (!name.equalsIgnoreCase(ctPlayer.name)) {
+	                	// Name Changed
+	                }
+	                
+	                ctPlayer.name = name;
+	                ctPlayer.isOnline = true;
+	                ctPlayer.lastJoin = (int) (System.currentTimeMillis() / 1000L);
+	       
+	                this.players.put(uuid, ctPlayer);
+	                this.uuids.put(uuid, name);
+                }
                 
                 this.plugin.getProxy().getScheduler().runAsync(this.plugin, new Runnable() {
                     public void run() {

@@ -89,7 +89,7 @@ public class PlayerLoginListener implements Listener {
                 public void run() {
                 	HashMap<String, String> placeHolder = new HashMap<String, String>();
                 	placeHolder.put("player", ev.getConnection().getName());        	
-                	plugin.getMessageHandler().broadcast(plugin.getMessageHandler().getMessage("join.broadcast", placeHolder));
+                	plugin.getMessageHandler().broadcast(plugin.getMessageHandler().getMessage("join.broadcast.joined", placeHolder));
                 }
             }, 1, TimeUnit.SECONDS);
         	

@@ -23,11 +23,9 @@ import net.md_5.bungee.event.EventHandler;
 
 public class MessageHandler implements Listener {
 	private CTSuite plugin;
-	private HashMap<String, String> messages;
 	
 	public MessageHandler() {
 		this.plugin = CTSuite.getInstance();
-		this.messages = new HashMap<String, String>();
 	}
 	
 	@EventHandler
@@ -42,52 +40,14 @@ public class MessageHandler implements Listener {
 				HashMap<String, String> placeHolder = new HashMap<String, String>();
 	        	placeHolder.put("player", playerName);
 	        	placeHolder.put("permission", (String) ev.getValue("permission"));
-	        	send(uuid, getMessage("permission.denied", placeHolder));
+	        	send(uuid, getMessage("info.noPermission", placeHolder));
 				break;
 				
 			case "player.inform.message.send":
 				send((UUID) ev.getValue("uuid"), (String) ev.getValue("message"));
 				break;
 		}
-    }
-	
-	public void readMessages() {
-		BufferedReader read = null;
-		InputStreamReader isr = null;
-        this.messages = new HashMap<String, String>();
-        
-        File file = new File(plugin.getDataFolder(), "messages.yml");
-        try {
-        	isr = new InputStreamReader(new FileInputStream(file), "UTF8");
-            read = new BufferedReader(isr);
-            String line;
-            while ((line = read.readLine()) != null) {
-                line = line.trim();
-                if (!line.equals("") && !line.startsWith("#")) {
-                    String[] split = line.split(": ");
-                    String msg = "";
-                    for (int i = 1; i < split.length; i++)
-                        msg += split[i] + ": ";
-                    msg = msg.substring(1, msg.length() - 3);
-                    messages.put(split[0], msg);
-                }
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-			try {
-				if (isr != null)
-					isr.close();
-				if (read != null)
-					read.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-        }
-    }
-	
+    }	
 
 	//
     public void send(UUID uuid, TextComponent message) {
@@ -141,11 +101,11 @@ public class MessageHandler implements Listener {
     }
 
     //
-    public TextComponent getMessage(String identifier, HashMap<String, String> placeHolders) {
-    	String message = messages.get(identifier).toString();
+    public TextComponent getMessage(String path, HashMap<String, String> placeHolders) {
+    	String message = plugin.getMessages().getString(path);
     	
     	if (message == null) {
-         	plugin.getLogger().info("Message '" + identifier + "' could not be found. Please update your messages.yml");
+         	plugin.getLogger().info("Message '" + path + "' could not be found. Please update your messages.yml");
          	return null;
     	}
         
@@ -154,9 +114,9 @@ public class MessageHandler implements Listener {
     	
     	TextComponent messageComponent = translateColorCodes(message);
         
-        if (messages.containsKey(identifier + ".hover")) {
+        if (plugin.getMessages().contains(path + "Hover")) {
         	HoverEvent.Action hoverAction = HoverEvent.Action.SHOW_TEXT;
-        	String hoverMessage = applyPlaceHolders(messages.get(identifier + ".hover"), placeHolders);
+        	String hoverMessage = applyPlaceHolders(plugin.getMessages().getString(path + "Hover"), placeHolders);
         	TextComponent hoverComponent = translateColorCodes(hoverMessage);
         	HoverEvent hover = new HoverEvent(hoverAction, new ComponentBuilder(hoverComponent.toLegacyText()).create());
         	messageComponent.setHoverEvent(hover);
@@ -165,8 +125,8 @@ public class MessageHandler implements Listener {
         return messageComponent;
     }
     
-    public TextComponent getMessage(String identifier) {
-        return getMessage(identifier, null);
+    public TextComponent getMessage(String path) {
+        return getMessage(path, null);
     }
 
     private String applyPlaceHolders(String str, HashMap<String, String> placeHolders) {

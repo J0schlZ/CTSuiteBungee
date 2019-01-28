@@ -22,7 +22,7 @@ public class PlayerLeaveListener implements Listener {
     	// Broadcast Logout
     	HashMap<String, String> placeHolder = new HashMap<String, String>();
     	placeHolder.put("player", ev.getPlayer().getName());        	
-    	plugin.getMessageHandler().broadcast(plugin.getMessageHandler().getMessage("leave.broadcast", placeHolder));
+    	plugin.getMessageHandler().broadcast(plugin.getMessageHandler().getMessage("join.broadcast.leaved", placeHolder));
     	
     	NetworkMessage nm = new NetworkMessage("player.update.leaved.network");
     	nm.put("uuid", ev.getPlayer().getUniqueId());
