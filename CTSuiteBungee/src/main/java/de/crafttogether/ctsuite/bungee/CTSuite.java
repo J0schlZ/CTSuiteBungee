@@ -20,7 +20,6 @@ import de.crafttogether.ctsuite.bungee.handlers.MessageHandler;
 import de.crafttogether.ctsuite.bungee.handlers.PlayerHandler;
 import de.crafttogether.ctsuite.bungee.handlers.TeleportHandler;
 import de.crafttogether.ctsuite.bungee.handlers.WorldHandler;
-import de.crafttogether.ctsuite.bungee.messaging.adapter.Sockets4MC;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
@@ -89,7 +88,7 @@ public class CTSuite extends Plugin {
         
         // Choose Messaging Adapter
         switch (this.messagingService) {
-        	case "Sockets4MC": new Sockets4MC(); break;
+        	case "SocketConnector": //new SocketConnector(); break;
         }
 
         this.messageHandler = new MessageHandler();

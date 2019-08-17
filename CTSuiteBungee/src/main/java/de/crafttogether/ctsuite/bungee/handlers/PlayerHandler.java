@@ -187,10 +187,10 @@ public class PlayerHandler implements Listener {
 	}
 	
 	private void onFlyCommand(String targetName, String senderUUID, String mode, boolean apply) {	
-		Boolean isAllowedFlight;
+		final Boolean isAllowedFlight;
 		UUID targetUUID = getUUID(targetName);
 		CTPlayer ctSender = null;
-		CTPlayer ctTarget = getPlayer(targetUUID);
+		final CTPlayer ctTarget = getPlayer(targetUUID);
 		
 		if (!senderUUID.equalsIgnoreCase("CONSOLE"))
 			ctSender = getPlayer(UUID.fromString(senderUUID));
@@ -291,7 +291,7 @@ public class PlayerHandler implements Listener {
 	public void onGamemodeCommand(String targetName, String senderUUID, String gameMode, boolean apply) {
 		UUID targetUUID = getUUID(targetName);
 		CTPlayer ctSender = null;
-		CTPlayer ctTarget = getPlayer(targetUUID);
+		final CTPlayer ctTarget = getPlayer(targetUUID);
 		gameMode = gameMode.toUpperCase();
 		
 		if (!senderUUID.equalsIgnoreCase("CONSOLE"))
@@ -398,10 +398,10 @@ public class PlayerHandler implements Listener {
 	}
 	
 	public void onPlayerTeleportPlayer(String senderUUID, String playerName, String targetName) {
-		HashMap<String, String> placeHolders = new HashMap<String, String>();
-		CTPlayer ctPlayer = getPlayer(playerName);
+		final HashMap<String, String> placeHolders = new HashMap<String, String>();
+		final CTPlayer ctPlayer = getPlayer(playerName);
 		CTPlayer ctTarget = getPlayer(targetName);
-		CTPlayer ctSender = getPlayer(senderUUID);
+		final CTPlayer ctSender = getPlayer(senderUUID);
 
 		if (ctPlayer == null) {
 			placeHolders.put("player", playerName);
@@ -475,7 +475,7 @@ public class PlayerHandler implements Listener {
 		this.players.get(uuid).save();
 	}
 
-	public void firstLogin (UUID uuid, String name) {    	
+	public void firstLogin (final UUID uuid, final String name) {    	
     	this.plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
             public void run() {
             	// Broadcast Firstjoin
@@ -535,8 +535,8 @@ public class PlayerHandler implements Listener {
         PreparedStatement statement = null;
         Connection connection = null;
         
-    	UUID uuid = con.getUniqueId();
-    	String name = con.getName();
+    	final UUID uuid = con.getUniqueId();
+    	final String name = con.getName();
         
         try {
 			connection = this.plugin.getMySQLConnection();

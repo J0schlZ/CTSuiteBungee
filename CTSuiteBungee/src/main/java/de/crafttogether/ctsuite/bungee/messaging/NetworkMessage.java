@@ -3,7 +3,6 @@ package de.crafttogether.ctsuite.bungee.messaging;
 import java.util.HashMap;
 
 import de.crafttogether.ctsuite.bungee.CTSuite;
-import de.crafttogether.ctsuite.bungee.messaging.adapter.Sockets4MC;
 
 public class NetworkMessage {
     private String messageKey;
@@ -25,7 +24,7 @@ public class NetworkMessage {
     	this.receiver = server;
     	
     	switch(this.adapter) {
-    		case "Sockets4MC": Sockets4MC.getInstance().send(this.messageKey, this.receiver, this.values); break;
+    		case "SocketConnector": //SocketConnector.getInstance().send(this.messageKey, this.receiver, this.values); break;
     	}
     }
     

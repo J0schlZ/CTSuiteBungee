@@ -23,7 +23,7 @@ public class PlayerLoginListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerLogin(LoginEvent ev) {
+    public void onPlayerLogin(final LoginEvent ev) {
         ev.registerIntent(plugin);
         
         String uuid = ev.getConnection().getUniqueId().toString();

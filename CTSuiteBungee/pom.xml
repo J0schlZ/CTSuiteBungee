@@ -15,42 +15,26 @@
       <id>bungeecord-repo</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
-    <repository>
-      <id>rhazdev</id>
-      <url>https://mymavenrepo.com/repo/NIp3fBk55f5oF6VI1Wso/</url>
-    </repository>
   </repositories>
   <dependencies>
     <dependency>
       <groupId>net.md-5</groupId>
       <artifactId>bungeecord-api</artifactId>
-      <version>1.13-SNAPSHOT</version>
+      <version>1.14-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
-      <version>2.4.3</version>
+      <version>3.3.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.6.4</version>
+      <version>1.7.28</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>fr.rhaz.minecraft</groupId>
-      <artifactId>sockets4mc</artifactId>
-      <version>5.0.4</version>
-      <scope>provided</scope>
-    </dependency>
-	<dependency>
-	  <groupId>org.jetbrains.kotlinx</groupId>
-	  <artifactId>kotlinx-coroutines-core</artifactId>
-	  <version>1.0.1</version>
-      <scope>provided</scope>
-	</dependency>
 	<dependency>
 	  <groupId>com.googlecode.json-simple</groupId>
 	  <artifactId>json-simple</artifactId>
